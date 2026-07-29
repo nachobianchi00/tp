@@ -1,1 +1,2 @@
+#Ignorar todas las dependencias creadas (no incluir node_modules de directorios en repositorio GitHub)
 node_modules/
