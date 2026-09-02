@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "back",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,12 +12,17 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "11.17.0",
+      "version": "^11.21.0",
       "onFail": "download"
     }
   },
   "type": "module",
   "dependencies": {
-    "express": "^5.2.1"
+    "@mikro-orm/core": "^7.1.14",
+    "@mikro-orm/mysql": "^7.1.14"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "^7.0.2"
   }
 }

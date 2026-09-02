@@ -1,0 +1,41 @@
+GET http://localhost:3000/api/characters
+
+
+###
+GET http://localhost:3000/api/characters/6a8de0f4ed44f088d827a6a2
+###
+POST http://localhost:3000/api/characters
+Content-Type: application/json
+
+{
+  "name": "John",
+  "characterClass": "Warrior",
+  "level": 5,
+  "items": ["Sword", "Shield"]
+}
+
+
+###
+PUT http://localhost:3000/api/characters/6a8de0f4ed44f088d827a6a2
+Content-Type: application/json
+
+{
+  "name": "nacho",
+  "characterClass": "Wizard",
+  "level": 1055550,
+  "items": ["Staff", "Hat"]
+}
+
+
+###
+PATCH http://localhost:3000/api/characters/6a8de0f4ed44f088d827a6a2
+Content-Type: application/json
+
+{
+  "name": "nacho",
+  "level": 1055550
+}
+ 
+
+###
+DELETE http://localhost:3000/api/characters/6a8e2e1d5321d43682d78a34
