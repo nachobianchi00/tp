@@ -1,12 +1,12 @@
-import { PrimaryKey } from '@mikro-orm/core'
+import { Property, PrimaryKey} from '@mikro-orm/decorators/legacy';
 
 export abstract class BaseEntity {
   @PrimaryKey()
   id?: number
 
-  /*
-
-  @Property({ type: DateTimeType })
+  
+/*
+  @Property()
   createdAt? = new Date()
 
   @Property({

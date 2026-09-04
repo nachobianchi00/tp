@@ -1,27 +1,20 @@
-import {
-  Entity,
-  Property,
-  ManyToMany,
-  Cascade,
-  ManyToOne,
-  Rel,
-} from '@mikro-orm/core'
+import { Entity, Property } from '@mikro-orm/decorators/legacy'
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
 
 
 
 @Entity()
-export class Character extends BaseEntity {
+export class Admin extends BaseEntity {
   @Property({ nullable: false })
   nombre!: string
 
-  @Property({ nullable: false })
+  @Property({ unique: true })
   dni!: number
 
   @Property({ nullable: false })
   apellido!: string
 
-  @Property({ nullable: false })
+  @Property({ unique: true })
   mail!: string
 
   @Property({ nullable: false })

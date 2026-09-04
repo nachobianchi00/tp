@@ -5,7 +5,7 @@ import {
   Cascade,
   ManyToOne,
   Rel,
-} from '@mikro-orm/core'
+} from '@mikro-orm/decorators/legacy'
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
 import { CharacterClass } from './characterClass.entity.js'
 import { Item } from './item.entity.js'

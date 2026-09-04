@@ -1,38 +1,31 @@
 import {
   Entity,
   Property,
-  ManyToMany,
-  Cascade,
-  ManyToOne,
-  Rel,
-} from '@mikro-orm/core'
+  OneToMany,
+} from '@mikro-orm/decorators/legacy'
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
-import { CharacterClass } from './characterClass.entity.js'
-import { Item } from './item.entity.js'
 
 @Entity()
-export class Character extends BaseEntity {
+export class Cliente extends BaseEntity {
   @Property({ nullable: false })
   nombre!: string
 
-  @ManyToOne(() => CharacterClass, { nullable: false })
-  characterClass!: Rel<CharacterClass>
-
   @Property({ nullable: false })
+  apellido!: string
+
+  @Property({ unique: true })
   dni!: number
 
   @Property({ nullable: false })
-  hp!: number
+  direccion!: string
 
   @Property({ nullable: false })
-  mana!: number
+  telefono!: string
+
+  @Property({ unique: true })
+  mail!: string
 
   @Property({ nullable: false })
-  attack!: number
+  password!: string
 
-  @ManyToMany(() => Item, (item) => item.characters, {
-    cascade: [Cascade.ALL],
-    owner: true,
-  })
-  items!: Item[]
 }
