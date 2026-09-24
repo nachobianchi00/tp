@@ -1,9 +1,11 @@
-import { Entity, Property, ManyToOne, Enum, ManyToMany, OneToMany  } from '@mikro-orm/decorators/legacy'
+import { Entity, Property, ManyToOne, Enum, ManyToMany, OneToMany, OneToOne } from '@mikro-orm/decorators/legacy'
 import { Cascade, Collection } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
 import { DetallePedido } from './detallePedido.entity.js';
 import { Cliente } from '../cliente/cliente.entity.js';
 import { MetodoPago } from './metodoPago.entity.js';
+import { MetodoEnvio } from './metodoEnvio.entity.js';
+import { Pago } from './pago.entity.js';
 
 export enum EstadoPedido {
   PENDIENTE = 'pendiente',
@@ -35,4 +37,9 @@ export class Pedido extends BaseEntity {
   @ManyToOne(() => MetodoPago)
   metodoPago!: MetodoPago;
 
+  @ManyToOne(() => MetodoEnvio)
+  metodoEnvio!: MetodoEnvio;
+
+  @OneToOne(() => Pago, { nullable: true, mappedBy: 'pedido' })
+  pago?: Pago; 
 }
