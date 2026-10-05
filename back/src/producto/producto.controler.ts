@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
-import { Admin } from './admin.entity.js'
+import { Producto } from './producto.entity.js'
 
 const em = orm.em
 
 async function findAll(req: Request, res: Response) {
   try {
-    const admins = await em.find(Admin, {})
-    res.json({ message: 'found all admins', data: admins })
+    const productos = await em.find(Producto, {}, { populate: ['categorias'] })
+    res.json({ message: 'found all productos', data: productos })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -16,8 +16,8 @@ async function findAll(req: Request, res: Response) {
 async function findOne(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    res.json({ message: 'found admin', data: admin })
+    const producto = await em.findOneOrFail(Producto, { id }, { populate: ['categorias'] })
+    res.json({ message: 'found producto', data: producto })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -25,9 +25,9 @@ async function findOne(req: Request, res: Response) {
 
 async function add(req: Request, res: Response) {
   try {
-    const admin = em.create(Admin, req.body)
+    const producto = em.create(Producto, req.body)
     await em.flush()
-    res.status(201).json({ message: 'admin created', data: admin })
+    res.status(201).json({ message: 'producto created', data: producto })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -36,10 +36,10 @@ async function add(req: Request, res: Response) {
 async function update(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    em.assign(admin, req.body)
+    const producto = await em.findOneOrFail(Producto, { id })
+    em.assign(producto, req.body)
     await em.flush()
-    res.json({ message: 'admin updated', data: admin })
+    res.json({ message: 'producto updated', data: producto })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -48,9 +48,9 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = em.getReference(Admin, id)
-    await em.removeAndFlush(admin)
-    res.json({ message: 'admin deleted' })
+    const producto = em.getReference(Producto, id)
+    await em.removeAndFlush(producto)
+    res.json({ message: 'producto deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }

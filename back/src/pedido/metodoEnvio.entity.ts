@@ -1,4 +1,4 @@
-import { Entity, Property, ManyToOne, OneToMany } from '@mikro-orm/decorators/legacy'
+import { Entity, Property, OneToMany } from '@mikro-orm/decorators/legacy'
 import { Collection } from '@mikro-orm/core'
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
 import { Pedido } from './pedido.entity.js'
@@ -8,21 +8,17 @@ export class MetodoEnvio extends BaseEntity {
   @Property({ nullable: false })
   descripcion!: string
 
-  @Property({ nullable: false })
-  costo!: string
-
+  @Property({ type: 'decimal', precision: 10, scale: 2, nullable: false })
+  costo!: number
 
   @Property({ default: true })
-  direccion!: boolean
+  requiereDireccion!: boolean
 
   @Property({ nullable: true })
   tiempoEstimado?: string
     
   @Property({ default: true })
   estado!: boolean
-
-  @Property({ default: true })
-  activo!: boolean
 
   @Property({ nullable: true })
   observacion?: string

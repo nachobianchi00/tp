@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
-import { Admin } from './admin.entity.js'
+import { MetodoEnvio } from './metodoEnvio.entity.js'
 
 const em = orm.em
 
 async function findAll(req: Request, res: Response) {
   try {
-    const admins = await em.find(Admin, {})
-    res.json({ message: 'found all admins', data: admins })
+    const metodosEnvio = await em.find(MetodoEnvio, {})
+    res.json({ message: 'found all metodos de envio', data: metodosEnvio })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -16,8 +16,8 @@ async function findAll(req: Request, res: Response) {
 async function findOne(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    res.json({ message: 'found admin', data: admin })
+    const metodoEnvio = await em.findOneOrFail(MetodoEnvio, { id })
+    res.json({ message: 'found metodo de envio', data: metodoEnvio })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -25,9 +25,9 @@ async function findOne(req: Request, res: Response) {
 
 async function add(req: Request, res: Response) {
   try {
-    const admin = em.create(Admin, req.body)
+    const metodoEnvio = em.create(MetodoEnvio, req.body)
     await em.flush()
-    res.status(201).json({ message: 'admin created', data: admin })
+    res.status(201).json({ message: 'metodo de envio created', data: metodoEnvio })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -36,10 +36,10 @@ async function add(req: Request, res: Response) {
 async function update(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    em.assign(admin, req.body)
+    const metodoEnvio = await em.findOneOrFail(MetodoEnvio, { id })
+    em.assign(metodoEnvio, req.body)
     await em.flush()
-    res.json({ message: 'admin updated', data: admin })
+    res.json({ message: 'metodo de envio updated', data: metodoEnvio })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -48,9 +48,9 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = em.getReference(Admin, id)
-    await em.removeAndFlush(admin)
-    res.json({ message: 'admin deleted' })
+    const metodoEnvio = em.getReference(MetodoEnvio, id)
+    await em.removeAndFlush(metodoEnvio)
+    res.json({ message: 'metodo de envio deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }

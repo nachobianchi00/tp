@@ -1,5 +1,5 @@
 import { Categoria } from "../categoria/categoria.entity.js";
-import { Entity, Property, ManyToMany, OneToMany } from '@mikro-orm/decorators/legacy'
+import { Entity, Property, ManyToMany } from '@mikro-orm/decorators/legacy'
 import { Collection } from '@mikro-orm/core'
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'
 
@@ -21,6 +21,6 @@ export class Producto extends BaseEntity {
   @Property({ nullable: false })
   estado!: boolean 
 
-  @ManyToMany(() => Categoria, categoria => categoria.productos)
+  @ManyToMany(() => Categoria)
   categorias = new Collection<Categoria>(this)
 }

@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property, ManyToOne } from '@mikro-orm/decorators/legacy';
+import { Entity, Property, ManyToOne } from '@mikro-orm/decorators/legacy';
 import { Pedido } from '../pedido/pedido.entity.js';
 import { Producto } from '../producto/producto.entity.js';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js'

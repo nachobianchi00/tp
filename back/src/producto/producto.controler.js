@@ -1,0 +1,56 @@
+import { orm } from '../shared/db/orm.js';
+import { Producto } from './producto.entity.js';
+const em = orm.em;
+async function findAll(req, res) {
+    try {
+        const productos = await em.find(Producto, {}, { populate: ['categorias'] });
+        res.json({ message: 'found all productos', data: productos });
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+async function findOne(req, res) {
+    try {
+        const id = Number.parseInt(req.params.id);
+        const producto = await em.findOneOrFail(Producto, { id }, { populate: ['categorias'] });
+        res.json({ message: 'found producto', data: producto });
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+async function add(req, res) {
+    try {
+        const producto = em.create(Producto, req.body);
+        await em.flush();
+        res.status(201).json({ message: 'producto created', data: producto });
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+async function update(req, res) {
+    try {
+        const id = Number.parseInt(req.params.id);
+        const producto = await em.findOneOrFail(Producto, { id });
+        em.assign(producto, req.body);
+        await em.flush();
+        res.json({ message: 'producto updated', data: producto });
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+async function remove(req, res) {
+    try {
+        const id = Number.parseInt(req.params.id);
+        const producto = em.getReference(Producto, id);
+        await em.removeAndFlush(producto);
+        res.json({ message: 'producto deleted' });
+    }
+    catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+export { findAll, findOne, add, update, remove };

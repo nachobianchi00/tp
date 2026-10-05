@@ -14,6 +14,6 @@ export class Categoria extends BaseEntity {
   @OneToMany(() => Categoria, (categoria) => categoria.categoriaPadre)
   subcategorias = new Collection<Categoria>(this);
 
-  @ManyToMany(() => Producto, producto => producto.categorias)
+  @ManyToMany(() => Producto, (producto) => producto.categorias)
   productos = new Collection<Producto>(this)  
 }

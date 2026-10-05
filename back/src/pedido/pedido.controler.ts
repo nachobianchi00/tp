@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
-import { Admin } from './admin.entity.js'
+import { Pedido } from './pedido.entity.js'
 
 const em = orm.em
 
 async function findAll(req: Request, res: Response) {
   try {
-    const admins = await em.find(Admin, {})
-    res.json({ message: 'found all admins', data: admins })
+    const pedidos = await em.find(Pedido, {}, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
+    res.json({ message: 'found all pedidos', data: pedidos })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -16,8 +16,8 @@ async function findAll(req: Request, res: Response) {
 async function findOne(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    res.json({ message: 'found admin', data: admin })
+    const pedido = await em.findOneOrFail(Pedido, { id }, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
+    res.json({ message: 'found pedido', data: pedido })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -25,9 +25,9 @@ async function findOne(req: Request, res: Response) {
 
 async function add(req: Request, res: Response) {
   try {
-    const admin = em.create(Admin, req.body)
+    const pedido = em.create(Pedido, req.body)
     await em.flush()
-    res.status(201).json({ message: 'admin created', data: admin })
+    res.status(201).json({ message: 'pedido created', data: pedido })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -36,10 +36,10 @@ async function add(req: Request, res: Response) {
 async function update(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    em.assign(admin, req.body)
+    const pedido = await em.findOneOrFail(Pedido, { id })
+    em.assign(pedido, req.body)
     await em.flush()
-    res.json({ message: 'admin updated', data: admin })
+    res.json({ message: 'pedido updated', data: pedido })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
@@ -48,9 +48,9 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id)
-    const admin = em.getReference(Admin, id)
-    await em.removeAndFlush(admin)
-    res.json({ message: 'admin deleted' })
+    const pedido = em.getReference(Pedido, id)
+    await em.removeAndFlush(pedido)
+    res.json({ message: 'pedido deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })
   }
