@@ -18,6 +18,7 @@ import { Pago } from './pago.entity.js';
 export var EstadoPedido;
 (function (EstadoPedido) {
     EstadoPedido["PENDIENTE"] = "pendiente";
+    EstadoPedido["CONFIRMADO"] = "confirmado";
     EstadoPedido["ENVIADO"] = "enviado";
     EstadoPedido["ENTREGADO"] = "entregado";
     EstadoPedido["CANCELADO"] = "cancelado";

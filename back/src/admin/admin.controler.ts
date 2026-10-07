@@ -1,60 +1,49 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { Admin } from './admin.entity.js'
+import { sendServiceError } from '../shared/service-errors.js'
+import { createAdmin, deleteAdmin, findAdmin, findAllAdmins, updateAdmin } from './admin.service.js'
 
-const em = orm.em
-
-async function findAll(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response) {
   try {
-    const admins = await em.find(Admin, {})
-    res.json({ message: 'found all admins', data: admins })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found all admins', data: await findAllAdmins() })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    res.json({ message: 'found admin', data: admin })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found admin', data: await findAdmin(parseRouteId(req.params.id)) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const admin = em.create(Admin, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'admin created', data: admin })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(201).json({ message: 'admin created', data: await createAdmin(req.body) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const admin = await em.findOneOrFail(Admin, { id })
-    em.assign(admin, req.body)
-    await em.flush()
-    res.json({ message: 'admin updated', data: admin })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({
+      message: 'admin updated',
+      data: await updateAdmin(parseRouteId(req.params.id), req.body),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const admin = em.getReference(Admin, id)
-    em.remove(admin)
-    await em.flush()
+    await deleteAdmin(parseRouteId(req.params.id))
     res.json({ message: 'admin deleted' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 

@@ -1,58 +1,48 @@
-import { orm } from '../shared/db/orm.js';
 import { parseRouteId } from '../shared/route-params.js';
-import { MetodoEnvio } from './metodoEnvio.entity.js';
-const em = orm.em;
-async function findAll(req, res) {
+import { sendServiceError } from '../shared/service-errors.js';
+import { createMetodoEnvio, deleteMetodoEnvio, findAllMetodosEnvio, findMetodoEnvio, updateMetodoEnvio, } from './metodoEnvio.service.js';
+async function findAll(_req, res) {
     try {
-        const metodosEnvio = await em.find(MetodoEnvio, {});
-        res.json({ message: 'found all metodos de envio', data: metodosEnvio });
+        res.json({ message: 'found all metodos de envio', data: await findAllMetodosEnvio() });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function findOne(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const metodoEnvio = await em.findOneOrFail(MetodoEnvio, { id });
-        res.json({ message: 'found metodo de envio', data: metodoEnvio });
+        res.json({ message: 'found metodo de envio', data: await findMetodoEnvio(parseRouteId(req.params.id)) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function add(req, res) {
     try {
-        const metodoEnvio = em.create(MetodoEnvio, req.body);
-        await em.flush();
-        res.status(201).json({ message: 'metodo de envio created', data: metodoEnvio });
+        res.status(201).json({ message: 'metodo de envio created', data: await createMetodoEnvio(req.body) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function update(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const metodoEnvio = await em.findOneOrFail(MetodoEnvio, { id });
-        em.assign(metodoEnvio, req.body);
-        await em.flush();
-        res.json({ message: 'metodo de envio updated', data: metodoEnvio });
+        res.json({
+            message: 'metodo de envio updated',
+            data: await updateMetodoEnvio(parseRouteId(req.params.id), req.body),
+        });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function remove(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const metodoEnvio = em.getReference(MetodoEnvio, id);
-        em.remove(metodoEnvio);
-        await em.flush();
+        await deleteMetodoEnvio(parseRouteId(req.params.id));
         res.json({ message: 'metodo de envio deleted' });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 export { findAll, findOne, add, update, remove };

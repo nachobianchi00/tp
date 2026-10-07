@@ -1,60 +1,49 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { Categoria } from './categoria.entity.js'
+import { sendServiceError } from '../shared/service-errors.js'
+import { createCategoria, deleteCategoria, findAllCategorias, findCategoria, updateCategoria } from './categoria.service.js'
 
-const em = orm.em
-
-async function findAll(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response) {
   try {
-    const categorias = await em.find(Categoria, {}, { populate: ['subcategorias', 'productos'] })
-    res.json({ message: 'found all categorias', data: categorias })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found all categorias', data: await findAllCategorias() })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const categoria = await em.findOneOrFail(Categoria, { id }, { populate: ['subcategorias', 'productos'] })
-    res.json({ message: 'found categoria', data: categoria })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found categoria', data: await findCategoria(parseRouteId(req.params.id)) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const categoria = em.create(Categoria, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'categoria created', data: categoria })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(201).json({ message: 'categoria created', data: await createCategoria(req.body) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const categoria = await em.findOneOrFail(Categoria, { id })
-    em.assign(categoria, req.body)
-    await em.flush()
-    res.json({ message: 'categoria updated', data: categoria })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({
+      message: 'categoria updated',
+      data: await updateCategoria(parseRouteId(req.params.id), req.body),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const categoria = em.getReference(Categoria, id)
-    em.remove(categoria)
-    await em.flush()
+    await deleteCategoria(parseRouteId(req.params.id))
     res.json({ message: 'categoria deleted' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 

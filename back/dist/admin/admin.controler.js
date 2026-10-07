@@ -1,58 +1,48 @@
-import { orm } from '../shared/db/orm.js';
 import { parseRouteId } from '../shared/route-params.js';
-import { Admin } from './admin.entity.js';
-const em = orm.em;
-async function findAll(req, res) {
+import { sendServiceError } from '../shared/service-errors.js';
+import { createAdmin, deleteAdmin, findAdmin, findAllAdmins, updateAdmin } from './admin.service.js';
+async function findAll(_req, res) {
     try {
-        const admins = await em.find(Admin, {});
-        res.json({ message: 'found all admins', data: admins });
+        res.json({ message: 'found all admins', data: await findAllAdmins() });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function findOne(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const admin = await em.findOneOrFail(Admin, { id });
-        res.json({ message: 'found admin', data: admin });
+        res.json({ message: 'found admin', data: await findAdmin(parseRouteId(req.params.id)) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function add(req, res) {
     try {
-        const admin = em.create(Admin, req.body);
-        await em.flush();
-        res.status(201).json({ message: 'admin created', data: admin });
+        res.status(201).json({ message: 'admin created', data: await createAdmin(req.body) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function update(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const admin = await em.findOneOrFail(Admin, { id });
-        em.assign(admin, req.body);
-        await em.flush();
-        res.json({ message: 'admin updated', data: admin });
+        res.json({
+            message: 'admin updated',
+            data: await updateAdmin(parseRouteId(req.params.id), req.body),
+        });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function remove(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const admin = em.getReference(Admin, id);
-        em.remove(admin);
-        await em.flush();
+        await deleteAdmin(parseRouteId(req.params.id));
         res.json({ message: 'admin deleted' });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 export { findAll, findOne, add, update, remove };

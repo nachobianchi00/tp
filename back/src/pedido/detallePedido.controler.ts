@@ -1,64 +1,61 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { DetallePedido } from './detallePedido.entity.js'
-
-const em = orm.em
+import { sendServiceError } from '../shared/service-errors.js'
+import {
+  createDetallePedido,
+  deleteDetallePedido,
+  findAllDetallesPedido,
+  findDetallePedido,
+  updateDetallePedido,
+} from './detallePedido.service.js'
 
 async function findAll(_req: Request, res: Response) {
   try {
-    const detallesPedido = await em.find(DetallePedido, {}, { populate: ['pedido', 'producto'] })
-    res.json({ message: 'found all detalles de pedido', data: detallesPedido })
+    res.json({ message: 'found all detalles de pedido', data: await findAllDetallesPedido() })
   } catch (error: unknown) {
-    res.status(500).json({ message: error instanceof Error ? error.message : String(error) })
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const detallePedido = await em.findOneOrFail(
-      DetallePedido,
-      { id },
-      { populate: ['pedido', 'producto'] },
-    )
-    res.json({ message: 'found detalle de pedido', data: detallePedido })
+    res.json({
+      message: 'found detalle de pedido',
+      data: await findDetallePedido(parseRouteId(req.params.id)),
+    })
   } catch (error: unknown) {
-    res.status(500).json({ message: error instanceof Error ? error.message : String(error) })
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const detallePedido = em.create(DetallePedido, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'detalle de pedido created', data: detallePedido })
+    res.status(201).json({
+      message: 'detalle de pedido created',
+      data: await createDetallePedido(req.body),
+    })
   } catch (error: unknown) {
-    res.status(500).json({ message: error instanceof Error ? error.message : String(error) })
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const detallePedido = await em.findOneOrFail(DetallePedido, { id })
-    em.assign(detallePedido, req.body)
-    await em.flush()
-    res.json({ message: 'detalle de pedido updated', data: detallePedido })
+    res.json({
+      message: 'detalle de pedido updated',
+      data: await updateDetallePedido(parseRouteId(req.params.id), req.body),
+    })
   } catch (error: unknown) {
-    res.status(500).json({ message: error instanceof Error ? error.message : String(error) })
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const detallePedido = em.getReference(DetallePedido, id)
-    em.remove(detallePedido)
-    await em.flush()
+    await deleteDetallePedido(parseRouteId(req.params.id))
     res.json({ message: 'detalle de pedido deleted' })
   } catch (error: unknown) {
-    res.status(500).json({ message: error instanceof Error ? error.message : String(error) })
+    sendServiceError(res, error)
   }
 }
 

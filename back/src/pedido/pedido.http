@@ -16,19 +16,22 @@ Content-Type: application/json
   "cliente": {{clienteId}},
   "metodoPago": {{metodoPagoId}},
   "metodoEnvio": {{metodoEnvioId}},
-  "total": 120.5
+  "detallePedido": [
+    {
+      "producto": 1,
+      "cantidad": 2
+    }
+  ]
 }
 
 ### Get created order
 GET {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}
 
-### Update created order
-PUT {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}
-Content-Type: application/json
+### Confirm created order and deduct stock
+POST {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}/confirmar
 
-{
-  "total": 121.5
-}
+### Cancel order and restore stock if it was confirmed
+POST {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}/cancelar
 
 ### Delete created order
 DELETE {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}

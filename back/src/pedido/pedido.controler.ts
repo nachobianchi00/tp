@@ -1,61 +1,80 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { Pedido } from './pedido.entity.js'
+import { sendServiceError } from '../shared/service-errors.js'
+import {
+  createPedido,
+  cancelarPedido,
+  confirmarPedido,
+  deletePedido,
+  findAllPedidos,
+  findPedido,
+  updatePedido,
+} from './pedido.service.js'
 
-const em = orm.em
-
-async function findAll(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response) {
   try {
-    const pedidos = await em.find(Pedido, {}, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
-    res.json({ message: 'found all pedidos', data: pedidos })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found all pedidos', data: await findAllPedidos() })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pedido = await em.findOneOrFail(Pedido, { id }, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
-    res.json({ message: 'found pedido', data: pedido })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found pedido', data: await findPedido(parseRouteId(req.params.id)) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const pedido = em.create(Pedido, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'pedido created', data: pedido })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(201).json({ message: 'pedido created', data: await createPedido(req.body) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pedido = await em.findOneOrFail(Pedido, { id })
-    em.assign(pedido, req.body)
-    await em.flush()
-    res.json({ message: 'pedido updated', data: pedido })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({
+      message: 'pedido updated',
+      data: await updatePedido(parseRouteId(req.params.id), req.body),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pedido = em.getReference(Pedido, id)
-    em.remove(pedido)
-    await em.flush()
+    await deletePedido(parseRouteId(req.params.id))
     res.json({ message: 'pedido deleted' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
-export { findAll, findOne, add, update, remove }
+async function confirm(req: Request, res: Response) {
+  try {
+    res.json({
+      message: 'pedido confirmed and stock deducted',
+      data: await confirmarPedido(parseRouteId(req.params.id)),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
+  }
+}
+
+async function cancel(req: Request, res: Response) {
+  try {
+    res.json({
+      message: 'pedido cancelled',
+      data: await cancelarPedido(parseRouteId(req.params.id)),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
+  }
+}
+
+export { findAll, findOne, add, update, remove, confirm, cancel }

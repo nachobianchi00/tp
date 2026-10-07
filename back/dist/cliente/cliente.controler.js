@@ -1,58 +1,48 @@
-import { orm } from '../shared/db/orm.js';
 import { parseRouteId } from '../shared/route-params.js';
-import { Cliente } from './cliente.entity.js';
-const em = orm.em; //entitymanager -> para no escribir consultas ssql a mano 
-async function findAll(req, res) {
+import { sendServiceError } from '../shared/service-errors.js';
+import { createCliente, deleteCliente, findAllClientes, findCliente, updateCliente } from './cliente.service.js';
+async function findAll(_req, res) {
     try {
-        const clientes = await em.find(Cliente, {}, { populate: ['pedidos'] });
-        res.json({ message: 'found all clientes', data: clientes });
+        res.json({ message: 'found all clientes', data: await findAllClientes() });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function findOne(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const cliente = await em.findOneOrFail(Cliente, { id }, { populate: ['pedidos'] });
-        res.json({ message: 'found cliente', data: cliente });
+        res.json({ message: 'found cliente', data: await findCliente(parseRouteId(req.params.id)) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function add(req, res) {
     try {
-        const cliente = em.create(Cliente, req.body);
-        await em.flush();
-        res.status(201).json({ message: 'cliente created', data: cliente });
+        res.status(201).json({ message: 'cliente created', data: await createCliente(req.body) });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function update(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const cliente = await em.findOneOrFail(Cliente, { id });
-        em.assign(cliente, req.body);
-        await em.flush();
-        res.json({ message: 'cliente updated', data: cliente });
+        res.json({
+            message: 'cliente updated',
+            data: await updateCliente(parseRouteId(req.params.id), req.body),
+        });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 async function remove(req, res) {
     try {
-        const id = parseRouteId(req.params.id);
-        const cliente = em.getReference(Cliente, id);
-        em.remove(cliente);
-        await em.flush();
+        await deleteCliente(parseRouteId(req.params.id));
         res.json({ message: 'cliente deleted' });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        sendServiceError(res, error);
     }
 }
 export { findAll, findOne, add, update, remove };

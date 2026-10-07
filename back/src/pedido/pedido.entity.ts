@@ -9,6 +9,7 @@ import { Pago } from './pago.entity.js';
 
 export enum EstadoPedido {
   PENDIENTE = 'pendiente',
+  CONFIRMADO = 'confirmado',
   ENVIADO = 'enviado',
   ENTREGADO = 'entregado',
   CANCELADO = 'cancelado',

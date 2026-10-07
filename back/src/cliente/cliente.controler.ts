@@ -1,60 +1,49 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { Cliente } from './cliente.entity.js'
+import { sendServiceError } from '../shared/service-errors.js'
+import { createCliente, deleteCliente, findAllClientes, findCliente, updateCliente } from './cliente.service.js'
 
-const em = orm.em //entitymanager -> para no escribir consultas ssql a mano 
-
-async function findAll(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response) {
   try {
-    const clientes = await em.find(Cliente, {}, { populate: ['pedidos'] })
-    res.json({ message: 'found all clientes', data: clientes })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found all clientes', data: await findAllClientes() })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const cliente = await em.findOneOrFail(Cliente, { id }, { populate: ['pedidos'] })
-    res.json({ message: 'found cliente', data: cliente })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found cliente', data: await findCliente(parseRouteId(req.params.id)) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const cliente = em.create(Cliente, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'cliente created', data: cliente })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(201).json({ message: 'cliente created', data: await createCliente(req.body) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const cliente = await em.findOneOrFail(Cliente, { id })
-    em.assign(cliente, req.body)
-    await em.flush()
-    res.json({ message: 'cliente updated', data: cliente })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({
+      message: 'cliente updated',
+      data: await updateCliente(parseRouteId(req.params.id), req.body),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const cliente = em.getReference(Cliente, id)
-    em.remove(cliente)
-    await em.flush()
+    await deleteCliente(parseRouteId(req.params.id))
     res.json({ message: 'cliente deleted' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 

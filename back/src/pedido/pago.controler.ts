@@ -1,60 +1,49 @@
 import { Request, Response } from 'express'
-import { orm } from '../shared/db/orm.js'
 import { parseRouteId } from '../shared/route-params.js'
-import { Pago } from './pago.entity.js'
+import { sendServiceError } from '../shared/service-errors.js'
+import { createPago, deletePago, findAllPagos, findPago, updatePago } from './pago.service.js'
 
-const em = orm.em
-
-async function findAll(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response) {
   try {
-    const pagos = await em.find(Pago, {}, { populate: ['pedido'] })
-    res.json({ message: 'found all pagos', data: pagos })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found all pagos', data: await findAllPagos() })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pago = await em.findOneOrFail(Pago, { id }, { populate: ['pedido'] })
-    res.json({ message: 'found pago', data: pago })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({ message: 'found pago', data: await findPago(parseRouteId(req.params.id)) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function add(req: Request, res: Response) {
   try {
-    const pago = em.create(Pago, req.body)
-    await em.flush()
-    res.status(201).json({ message: 'pago created', data: pago })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.status(201).json({ message: 'pago created', data: await createPago(req.body) })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function update(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pago = await em.findOneOrFail(Pago, { id })
-    em.assign(pago, req.body)
-    await em.flush()
-    res.json({ message: 'pago updated', data: pago })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+    res.json({
+      message: 'pago updated',
+      data: await updatePago(parseRouteId(req.params.id), req.body),
+    })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = parseRouteId(req.params.id)
-    const pago = em.getReference(Pago, id)
-    em.remove(pago)
-    await em.flush()
+    await deletePago(parseRouteId(req.params.id))
     res.json({ message: 'pago deleted' })
-  } catch (error: any) {
-    res.status(500).json({ message: error.message })
+  } catch (error: unknown) {
+    sendServiceError(res, error)
   }
 }
 
