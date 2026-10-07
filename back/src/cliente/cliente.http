@@ -1,0 +1,33 @@
+@baseUrl = http://localhost:3000
+
+### List clients
+GET {{baseUrl}}/api/clientes
+
+### Create client
+# @name createCliente
+POST {{baseUrl}}/api/clientes
+Content-Type: application/json
+
+{
+  "nombre": "Cliente CRUD",
+  "apellido": "Prueba",
+  "dni": {{$randomInt 100000000 999999999}},
+  "direccion": "Calle de prueba 123",
+  "telefono": "1100000000",
+  "mail": "cliente-{{$guid}}@example.test",
+  "password": "test-only-password"
+}
+
+### Get created client
+GET {{baseUrl}}/api/clientes/{{createCliente.response.body.$.data.id}}
+
+### Update created client
+PUT {{baseUrl}}/api/clientes/{{createCliente.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "nombre": "Cliente CRUD actualizado"
+}
+
+### Delete created client
+DELETE {{baseUrl}}/api/clientes/{{createCliente.response.body.$.data.id}}

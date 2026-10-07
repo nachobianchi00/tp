@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
+import { parseRouteId } from '../shared/route-params.js'
 import { Pago } from './pago.entity.js'
 
 const em = orm.em
@@ -15,7 +16,7 @@ async function findAll(req: Request, res: Response) {
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pago = await em.findOneOrFail(Pago, { id }, { populate: ['pedido'] })
     res.json({ message: 'found pago', data: pago })
   } catch (error: any) {
@@ -35,7 +36,7 @@ async function add(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pago = await em.findOneOrFail(Pago, { id })
     em.assign(pago, req.body)
     await em.flush()
@@ -47,9 +48,10 @@ async function update(req: Request, res: Response) {
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pago = em.getReference(Pago, id)
-    await em.removeAndFlush(pago)
+    em.remove(pago)
+    await em.flush()
     res.json({ message: 'pago deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })

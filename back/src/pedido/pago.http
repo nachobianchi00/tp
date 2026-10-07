@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:3000
+# Reemplaza este valor por el ID de un pedido existente.
+@pedidoId = 1
+
+### List payments
+GET {{baseUrl}}/api/pagos
+
+### Create payment
+# @name createPago
+POST {{baseUrl}}/api/pagos
+Content-Type: application/json
+
+{
+  "pedido": {{pedidoId}},
+  "preferenceId": "preference-{{$guid}}",
+  "externalReference": "external-{{$guid}}",
+  "monto": 120.5
+}
+
+### Get created payment
+GET {{baseUrl}}/api/pagos/{{createPago.response.body.$.data.id}}
+
+### Update created payment
+PUT {{baseUrl}}/api/pagos/{{createPago.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "monto": 121.5
+}
+
+### Delete created payment
+DELETE {{baseUrl}}/api/pagos/{{createPago.response.body.$.data.id}}

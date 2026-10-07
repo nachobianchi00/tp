@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:dev": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node ./dist/index.js\""
+    "start:dev": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node --env-file=.env.local ./dist/index.js\""
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,7 @@
     "@mikro-orm/reflection": "^7.1.14",
     "@mikro-orm/sql-highlighter": "^1.0.1",
     "express": "^5.2.1",
+    "mysql2": "^3.24.5",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {

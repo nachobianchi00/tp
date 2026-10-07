@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:3000
+
+### List shipping methods
+GET {{baseUrl}}/api/metodos-envio
+
+### Create shipping method
+# @name createMetodoEnvio
+POST {{baseUrl}}/api/metodos-envio
+Content-Type: application/json
+
+{
+  "descripcion": "Metodo de envio CRUD {{$guid}}",
+  "costo": 55.25,
+  "requiereDireccion": true,
+  "tiempoEstimado": "2 dias",
+  "estado": true,
+  "observacion": "Prueba CRUD"
+}
+
+### Get created shipping method
+GET {{baseUrl}}/api/metodos-envio/{{createMetodoEnvio.response.body.$.data.id}}
+
+### Update created shipping method
+PUT {{baseUrl}}/api/metodos-envio/{{createMetodoEnvio.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Metodo de envio CRUD actualizado {{$guid}}"
+}
+
+### Delete created shipping method
+DELETE {{baseUrl}}/api/metodos-envio/{{createMetodoEnvio.response.body.$.data.id}}

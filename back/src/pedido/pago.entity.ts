@@ -14,7 +14,7 @@ export enum EstadoPago {
 export class Pago extends BaseEntity {
   
   @OneToOne(() => Pedido)
-  pedido!: Pedido; // a qué pedido corresponde este pago
+  pedido!: Pedido & object; // a qué pedido corresponde este pago
 
   @Property()
   preferenceId!: string; // el "preference_id" que te devuelve MP al crear la preferencia

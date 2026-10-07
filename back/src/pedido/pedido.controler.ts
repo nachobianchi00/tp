@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
+import { parseRouteId } from '../shared/route-params.js'
 import { Pedido } from './pedido.entity.js'
 
 const em = orm.em
@@ -15,7 +16,7 @@ async function findAll(req: Request, res: Response) {
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pedido = await em.findOneOrFail(Pedido, { id }, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
     res.json({ message: 'found pedido', data: pedido })
   } catch (error: any) {
@@ -35,7 +36,7 @@ async function add(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pedido = await em.findOneOrFail(Pedido, { id })
     em.assign(pedido, req.body)
     await em.flush()
@@ -47,9 +48,10 @@ async function update(req: Request, res: Response) {
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const pedido = em.getReference(Pedido, id)
-    await em.removeAndFlush(pedido)
+    em.remove(pedido)
+    await em.flush()
     res.json({ message: 'pedido deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })

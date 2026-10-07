@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:3000
+
+### List products
+GET {{baseUrl}}/api/productos
+
+### Create product
+# @name createProducto
+POST {{baseUrl}}/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Producto CRUD {{$guid}}",
+  "descripcion": "Registro temporal para probar el CRUD",
+  "precio": 120.5,
+  "cantidad": 2,
+  "estado": true
+}
+
+### Get created product
+GET {{baseUrl}}/api/productos/{{createProducto.response.body.$.data.id}}
+
+### Update created product
+PUT {{baseUrl}}/api/productos/{{createProducto.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "nombre": "Producto CRUD actualizado {{$guid}}"
+}
+
+### Delete created product
+DELETE {{baseUrl}}/api/productos/{{createProducto.response.body.$.data.id}}

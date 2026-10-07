@@ -12,8 +12,8 @@ export class DetallePedido  extends BaseEntity {
   precioUnitario!: number;
 
   @ManyToOne(() => Pedido)
-  pedido!: Pedido;
+  pedido!: Pedido & object;
 
   @ManyToOne(() => Producto)
-  producto!: Producto;
+  producto!: Producto & object;
 }

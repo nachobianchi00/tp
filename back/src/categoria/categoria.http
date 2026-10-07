@@ -1,0 +1,27 @@
+@baseUrl = http://localhost:3000
+
+### List categories
+GET {{baseUrl}}/api/categorias
+
+### Create category
+# @name createCategoria
+POST {{baseUrl}}/api/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Categoria-{{$guid}}"
+}
+
+### Get created category
+GET {{baseUrl}}/api/categorias/{{createCategoria.response.body.$.data.id}}
+
+### Update created category
+PUT {{baseUrl}}/api/categorias/{{createCategoria.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "nombre": "Categoria-actualizada-{{$guid}}"
+}
+
+### Delete created category
+DELETE {{baseUrl}}/api/categorias/{{createCategoria.response.body.$.data.id}}

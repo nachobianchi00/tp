@@ -1,8 +1,9 @@
 import { Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
+import { parseRouteId } from '../shared/route-params.js'
 import { Cliente } from './cliente.entity.js'
 
-const em = orm.em
+const em = orm.em //entitymanager -> para no escribir consultas ssql a mano 
 
 async function findAll(req: Request, res: Response) {
   try {
@@ -15,7 +16,7 @@ async function findAll(req: Request, res: Response) {
 
 async function findOne(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const cliente = await em.findOneOrFail(Cliente, { id }, { populate: ['pedidos'] })
     res.json({ message: 'found cliente', data: cliente })
   } catch (error: any) {
@@ -35,7 +36,7 @@ async function add(req: Request, res: Response) {
 
 async function update(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const cliente = await em.findOneOrFail(Cliente, { id })
     em.assign(cliente, req.body)
     await em.flush()
@@ -47,9 +48,10 @@ async function update(req: Request, res: Response) {
 
 async function remove(req: Request, res: Response) {
   try {
-    const id = Number.parseInt(req.params.id)
+    const id = parseRouteId(req.params.id)
     const cliente = em.getReference(Cliente, id)
-    await em.removeAndFlush(cliente)
+    em.remove(cliente)
+    await em.flush()
     res.json({ message: 'cliente deleted' })
   } catch (error: any) {
     res.status(500).json({ message: error.message })

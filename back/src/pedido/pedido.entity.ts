@@ -27,7 +27,7 @@ export class Pedido extends BaseEntity {
   total!: number;
 
   @ManyToOne(() => Cliente)
-  cliente!: Cliente; 
+  cliente!: Cliente & object; 
 
   @OneToMany(() => DetallePedido, (detalle) => detalle.pedido, {
     cascade: [Cascade.ALL],
@@ -35,11 +35,11 @@ export class Pedido extends BaseEntity {
   detallePedido = new Collection<DetallePedido>(this);
 
   @ManyToOne(() => MetodoPago)
-  metodoPago!: MetodoPago;
+  metodoPago!: MetodoPago & object;
 
   @ManyToOne(() => MetodoEnvio)
-  metodoEnvio!: MetodoEnvio;
+  metodoEnvio!: MetodoEnvio & object;
 
   @OneToOne(() => Pago, { nullable: true, mappedBy: 'pedido' })
-  pago?: Pago; 
+  pago?: Pago & object; 
 }

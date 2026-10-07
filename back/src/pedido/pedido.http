@@ -1,0 +1,34 @@
+@baseUrl = http://localhost:3000
+# Reemplaza estos valores por IDs existentes de cliente, metodo de pago y envio.
+@clienteId = 1
+@metodoPagoId = 1
+@metodoEnvioId = 1
+
+### List orders
+GET {{baseUrl}}/api/pedidos
+
+### Create order
+# @name createPedido
+POST {{baseUrl}}/api/pedidos
+Content-Type: application/json
+
+{
+  "cliente": {{clienteId}},
+  "metodoPago": {{metodoPagoId}},
+  "metodoEnvio": {{metodoEnvioId}},
+  "total": 120.5
+}
+
+### Get created order
+GET {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}
+
+### Update created order
+PUT {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "total": 121.5
+}
+
+### Delete created order
+DELETE {{baseUrl}}/api/pedidos/{{createPedido.response.body.$.data.id}}

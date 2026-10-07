@@ -9,7 +9,7 @@ export class Categoria extends BaseEntity {
   nombre!: string
    
   @ManyToOne(() => Categoria, { nullable: true })
-  categoriaPadre?: Categoria;
+  categoriaPadre?: Categoria & object;
 
   @OneToMany(() => Categoria, (categoria) => categoria.categoriaPadre)
   subcategorias = new Collection<Categoria>(this);

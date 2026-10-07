@@ -7,6 +7,7 @@ import { categoriaRouter } from './categoria/categoria.routes.js'
 import { clienteRouter } from './cliente/cliente.routes.js'
 import { productoRouter } from './producto/producto.routes.js'
 import { pedidoRouter } from './pedido/pedido.routes.js'
+import { detallePedidoRouter } from './pedido/detallePedido.routes.js'
 import { metodoPagoRouter } from './pedido/metodoPago.routes.js'
 import { metodoEnvioRouter } from './pedido/metodoEnvio.routes.js'
 import { pagoRouter } from './pedido/pago.routes.js'
@@ -28,6 +29,7 @@ app.use('/api/categorias', categoriaRouter)
 app.use('/api/clientes', clienteRouter)
 app.use('/api/productos', productoRouter)
 app.use('/api/pedidos', pedidoRouter)
+app.use('/api/detalles-pedido', detallePedidoRouter)
 app.use('/api/metodos-pago', metodoPagoRouter)
 app.use('/api/metodos-envio', metodoEnvioRouter)
 app.use('/api/pagos', pagoRouter)
@@ -44,4 +46,3 @@ app.listen(3000, () => {
     console.log("server is running on port http://localhost:3000")
 
 })
-
