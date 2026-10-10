@@ -1,0 +1,28 @@
+@baseUrl = http://localhost:3000
+
+### List payment methods
+GET {{baseUrl}}/api/metodos-pago
+
+### Create payment method
+# @name createMetodoPago
+POST {{baseUrl}}/api/metodos-pago
+Content-Type: application/json
+
+{
+  "descripcion": "Metodo de pago CRUD {{$guid}}",
+  "estado": true
+}
+
+### Get created payment method
+GET {{baseUrl}}/api/metodos-pago/{{createMetodoPago.response.body.$.data.id}}
+
+### Update created payment method
+PUT {{baseUrl}}/api/metodos-pago/{{createMetodoPago.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "descripcion": "Metodo de pago CRUD actualizado {{$guid}}"
+}
+
+### Delete created payment method
+DELETE {{baseUrl}}/api/metodos-pago/{{createMetodoPago.response.body.$.data.id}}

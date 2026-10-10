@@ -1,0 +1,37 @@
+{
+  "name": "back",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node --env-file=.env.local ./dist/index.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.21.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "dependencies": {
+    "@mikro-orm/core": "^7.1.14",
+    "@mikro-orm/decorators": "^7.1.14",
+    "@mikro-orm/mysql": "^7.1.14",
+    "@mikro-orm/reflection": "^7.1.14",
+    "@mikro-orm/sql-highlighter": "^1.0.1",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.5",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.0",
+    "tsc-watch": "^7.2.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

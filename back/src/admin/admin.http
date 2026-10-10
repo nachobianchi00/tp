@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:3000
+
+### List admins
+GET {{baseUrl}}/api/admins
+
+### Create admin
+# @name createAdmin
+POST {{baseUrl}}/api/admins
+Content-Type: application/json
+
+{
+  "nombre": "Admin CRUD",
+  "dni": {{$randomInt 100000000 999999999}},
+  "apellido": "Prueba",
+  "mail": "admin-{{$guid}}@example.test",
+  "password": "test-only-password"
+}
+
+### Get created admin
+GET {{baseUrl}}/api/admins/{{createAdmin.response.body.$.data.id}}
+
+### Update created admin
+PUT {{baseUrl}}/api/admins/{{createAdmin.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "nombre": "Admin CRUD actualizado"
+}
+
+### Delete created admin
+DELETE {{baseUrl}}/api/admins/{{createAdmin.response.body.$.data.id}}

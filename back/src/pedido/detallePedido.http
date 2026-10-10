@@ -1,0 +1,33 @@
+@baseUrl = http://localhost:3000
+# Reemplaza estos valores por IDs existentes de pedido y producto.
+@pedidoId = 1
+@productoId = 1
+
+### List order details
+GET {{baseUrl}}/api/detalles-pedido
+
+### Create order detail
+# @name createDetallePedido
+POST {{baseUrl}}/api/detalles-pedido
+Content-Type: application/json
+
+{
+  "pedido": {{pedidoId}},
+  "producto": {{productoId}},
+  "cantidad": 1,
+  "precioUnitario": 120.5
+}
+
+### Get created order detail
+GET {{baseUrl}}/api/detalles-pedido/{{createDetallePedido.response.body.$.data.id}}
+
+### Update created order detail
+PUT {{baseUrl}}/api/detalles-pedido/{{createDetallePedido.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "cantidad": 2
+}
+
+### Delete created order detail
+DELETE {{baseUrl}}/api/detalles-pedido/{{createDetallePedido.response.body.$.data.id}}
