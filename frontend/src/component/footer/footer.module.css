@@ -1,0 +1,98 @@
+/* ============================================
+   FOOTER — contenedor general
+   ============================================ */
+.footer {
+  margin-top: 3rem;
+}
+
+/* ============================================
+   BAR TOP — logo + categorías/páginas (fondo claro)
+   ============================================ */
+.barraSuperior {
+  display: flex;
+  align-items: flex-start;
+  gap: 3rem;
+  padding: 2rem 2rem;
+  background: var(--color-bg-light);
+  border-top: 1px solid var(--color-border);
+}
+
+.logoLink {
+  flex-shrink: 0;
+}
+
+.logo {
+  height: 170px;
+  width: auto;
+}
+
+.columnas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.columnaTitulo {
+  font-size: 0.95rem;
+  color: var(--color-primary);
+  margin: 0 0 0.4rem;
+}
+
+.columnaItem {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.columnaLink {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.columnaLink:hover {
+  color: var(--color-primary);
+}
+
+/* ============================================
+   BAR LOWER — redes sociales + derechos (franja azul)
+   ============================================ */
+.barraInferior {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
+  background: var(--color-primary);
+  color: var(--color-secondary);
+}
+
+.redes {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.redLink {
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+
+.redLink:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.derechos {
+  font-size: 0.75rem;
+  margin: 0;
+  opacity: 0.8;
+}

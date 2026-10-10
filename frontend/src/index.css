@@ -1,0 +1,13 @@
+:root {
+  --color-primary: #3480B1;
+  --color-primary-light: #3480B1;
+  --color-secondary: #FFFFFF;
+  --color-text: #212121;
+  --color-text-light: #757575;
+  --color-bg-light: #F5F7FA;
+  --color-border: #E0E0E0;
+
+  --color-on-primary: #FFFFFF;
+
+  --gradient-header: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+}

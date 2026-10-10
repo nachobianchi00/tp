@@ -1,0 +1,45 @@
+.container {
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.titulo {
+  font-size: 1.2rem;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.card {
+  flex: 0 0 auto;
+  width: 180px;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.imagen {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--color-bg-light);
+}
+
+.nombre {
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0.2rem;
+}
+
+.precio {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
