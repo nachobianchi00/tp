@@ -1,5 +1,7 @@
 import { orm } from '../shared/db/orm.js'
 import { ServiceError, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js'
+import { hashPassword } from '../shared/security/password.js'
+import { requirePassword } from '../shared/security/password-validation.js'
 import { Cliente } from './cliente.entity.js'
 
 const em = orm.em
@@ -12,11 +14,34 @@ function parseCliente(value: unknown) {
   const direccion = requireString(body.direccion, 'direccion')
   const telefono = requireString(body.telefono, 'telefono')
   const mail = requireString(body.mail, 'mail').toLowerCase()
-  const password = requireString(body.password, 'password')
+  const password = requirePassword(body.password)
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
     throw new ServiceError('mail must be a valid email address', 400)
   }
   return { nombre, apellido, dni, direccion, telefono, mail, password }
+}
+
+function parseClienteUpdate(value: unknown) {
+  const body = requireRecord(value)
+  const allowedFields = ['nombre', 'apellido', 'dni', 'direccion', 'telefono', 'mail', 'password']
+  if (Object.keys(body).some(field => !allowedFields.includes(field))) {
+    throw new ServiceError('Request body contains fields that cannot be updated', 400)
+  }
+
+  const input: Partial<Pick<Cliente, 'nombre' | 'apellido' | 'dni' | 'direccion' | 'telefono' | 'mail' | 'password'>> = {}
+  if (Object.hasOwn(body, 'nombre')) input.nombre = requireString(body.nombre, 'nombre')
+  if (Object.hasOwn(body, 'apellido')) input.apellido = requireString(body.apellido, 'apellido')
+  if (Object.hasOwn(body, 'dni')) input.dni = requirePositiveInteger(body.dni, 'dni')
+  if (Object.hasOwn(body, 'direccion')) input.direccion = requireString(body.direccion, 'direccion')
+  if (Object.hasOwn(body, 'telefono')) input.telefono = requireString(body.telefono, 'telefono')
+  if (Object.hasOwn(body, 'mail')) {
+    input.mail = requireString(body.mail, 'mail').toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.mail)) {
+      throw new ServiceError('mail must be a valid email address', 400)
+    }
+  }
+  if (Object.hasOwn(body, 'password')) input.password = requirePassword(body.password)
+  return input
 }
 
 export async function findAllClientes() {
@@ -37,15 +62,29 @@ export async function createCliente(value: unknown) {
   if (await em.findOne(Cliente, { dni: input.dni })) {
     throw new ServiceError('A client with this DNI already exists', 409)
   }
-  const cliente = em.create(Cliente, input)
+  const cliente = em.create(Cliente, { ...input, password: await hashPassword(input.password) })
   await em.flush()
   return cliente
 }
 
 export async function updateCliente(id: number, value: unknown) {
   const cliente = await findCliente(id)
-  const body = requireRecord(value)
-  em.assign(cliente, body)
+  const input = parseClienteUpdate(value)
+  if (input.mail !== undefined && input.mail !== cliente.mail) {
+    const duplicate = await em.findOne(Cliente, { mail: input.mail })
+    if (duplicate && duplicate.id !== cliente.id) {
+      throw new ServiceError('A client with this email already exists', 409)
+    }
+  }
+  if (input.dni !== undefined && input.dni !== cliente.dni) {
+    const duplicate = await em.findOne(Cliente, { dni: input.dni })
+    if (duplicate && duplicate.id !== cliente.id) {
+      throw new ServiceError('A client with this DNI already exists', 409)
+    }
+  }
+  // Solo una contraseña enviada y validada reemplaza el valor anterior.
+  if (input.password !== undefined) input.password = await hashPassword(input.password)
+  em.assign(cliente, input)
   await em.flush()
   return cliente
 }

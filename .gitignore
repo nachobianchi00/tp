@@ -1,2 +1,7 @@
 #Ignorar todas las dependencias creadas (no incluir node_modules de directorios en repositorio GitHub)
 node_modules/
+.env
+.env.*
+!.env.example
+.pnpm-store/
+*.log

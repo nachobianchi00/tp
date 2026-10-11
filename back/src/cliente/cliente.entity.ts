@@ -23,7 +23,7 @@ export class Cliente extends BaseEntity {
   @Property({ unique: true })
   mail!: string
 
-  @Property({ nullable: false })
+  @Property({ nullable: false, hidden: true })
   password!: string
 
   @OneToMany(() => Pedido, pedido => pedido.cliente ) // esta realcion apunta a pedido y en el objeto pedido podemos encontrar el cliente que hizo el pedido

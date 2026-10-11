@@ -1,18 +1,18 @@
 // src/page/checkout/component/resumen.tsx
 import { useCart } from '../../../context/cartContext/useCart';
-import type { EntregaData } from '../../../type/deliveryData';
+import type { DeliveryData } from '../../../type/deliveryData';
 import type { PayData } from '../../../type/payData';
 import styles from './resume.module.css';
 
 interface ResumenProps {
-  entregaData: EntregaData;
+  entregaData: DeliveryData;
   payData: PayData;
 }
 
 export default function Resumen({ entregaData, payData }: ResumenProps) {
   const { items, totalPrice } = useCart();
 
-  const costoEnvio = entregaData.metodoEnvio?.costo ?? 0;
+  const costoEnvio = entregaData.metodoEnvio?.price ?? 0;
   const total = totalPrice + costoEnvio;
 
   const puedeConfirmar =
@@ -42,7 +42,7 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
         <span>${totalPrice}</span>
       </div>
       <div className={styles.detalleFila}>
-        <span>Envío ({entregaData.metodoEnvio?.descripcion ?? '—'})</span>
+        <span>Envío ({entregaData.metodoEnvio?.description ?? '—'})</span>
         <span>${costoEnvio}</span>
       </div>
       <div className={styles.detalleTotal}>

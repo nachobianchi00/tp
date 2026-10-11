@@ -2,15 +2,21 @@ import 'reflect-metadata'
 import express from "express"
 import {orm, syncSchema} from './shared/db/orm.js'
 import { RequestContext } from '@mikro-orm/core'
-import { adminRouter } from './admin/admin.routes.js'
-import { categoriaRouter } from './categoria/categoria.routes.js'
-import { clienteRouter } from './cliente/cliente.routes.js'
-import { productoRouter } from './producto/producto.routes.js'
-import { pedidoRouter } from './pedido/pedido.routes.js'
-import { detallePedidoRouter } from './pedido/detallePedido.routes.js'
-import { metodoPagoRouter } from './pedido/metodoPago.routes.js'
-import { metodoEnvioRouter } from './pedido/metodoEnvio.routes.js'
-import { pagoRouter } from './pedido/pago.routes.js'
+import { createAdminRouter, adminAccessErrorHandler } from './admin/admin.routes.js'
+import { createCategoriaRouter, categoriaAccessErrorHandler } from './categoria/categoria.routes.js'
+import { createClienteRouter, clienteAccessErrorHandler } from './cliente/cliente.routes.js'
+import { createProductoRouter, productoAccessErrorHandler } from './producto/producto.routes.js'
+import { createPedidoRouter } from './pedido/pedido.routes.js'
+import { pedidoErrorHandler } from './pedido/pedido.controler.js'
+import { createDetallePedidoRouter } from './pedido/detallePedido.routes.js'
+import { detallePedidoErrorHandler } from './pedido/detallePedido.controler.js'
+import { createMetodoPagoRouter, metodoPagoAccessErrorHandler } from './pedido/metodoPago.routes.js'
+import { createMetodoEnvioRouter, metodoEnvioAccessErrorHandler } from './pedido/metodoEnvio.routes.js'
+import { createPagoRouter } from './pedido/pago.routes.js'
+import { pagoErrorHandler } from './pedido/pago.controler.js'
+import { createAuthRouter } from './auth/auth.routes.js'
+import { authErrorHandler } from './auth/auth.controler.js'
+import { createSessionMiddleware } from './shared/security/session.js'
 
 const app = express()
 
@@ -23,16 +29,30 @@ app.use((req, res, next) => {
  
 })
 
+// Una única instancia comparte las sesiones entre auth y los routers de la API.
+// Cada router aplica sus permisos; Admin, Cliente, Pedido y Pago ya tienen controles de acceso.
+app.use('/api', createSessionMiddleware())
 
-app.use('/api/admins', adminRouter)
-app.use('/api/categorias', categoriaRouter)
-app.use('/api/clientes', clienteRouter)
-app.use('/api/productos', productoRouter)
-app.use('/api/pedidos', pedidoRouter)
-app.use('/api/detalles-pedido', detallePedidoRouter)
-app.use('/api/metodos-pago', metodoPagoRouter)
-app.use('/api/metodos-envio', metodoEnvioRouter)
-app.use('/api/pagos', pagoRouter)
+// SESSION_SECRET es obligatorio. En producción también se deben configurar los orígenes.
+const configuredOrigins = process.env.CSRF_ALLOWED_ORIGINS
+const authOrigins = configuredOrigins === undefined && process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:5173', 'http://localhost:3000']
+    : (configuredOrigins ?? '').split(',').map(origin => origin.trim()).filter(Boolean)
+app.use('/api/auth',
+    createAuthRouter({ allowedOrigins: authOrigins }),
+    // Captura también errores de sesiones y de express.json(), anteriores al router.
+    authErrorHandler,
+)
+
+app.use('/api/admins', createAdminRouter({ allowedOrigins: authOrigins }), adminAccessErrorHandler)
+app.use('/api/categorias', createCategoriaRouter({ allowedOrigins: authOrigins }), categoriaAccessErrorHandler)
+app.use('/api/clientes', createClienteRouter({ allowedOrigins: authOrigins }), clienteAccessErrorHandler)
+app.use('/api/productos', createProductoRouter({ allowedOrigins: authOrigins }), productoAccessErrorHandler)
+app.use('/api/pedidos', createPedidoRouter({ allowedOrigins: authOrigins }), pedidoErrorHandler)
+app.use('/api/detalles-pedido', createDetallePedidoRouter({ allowedOrigins: authOrigins }), detallePedidoErrorHandler)
+app.use('/api/metodos-pago', createMetodoPagoRouter({ allowedOrigins: authOrigins }), metodoPagoAccessErrorHandler)
+app.use('/api/metodos-envio', createMetodoEnvioRouter({ allowedOrigins: authOrigins }), metodoEnvioAccessErrorHandler)
+app.use('/api/pagos', createPagoRouter({ allowedOrigins: authOrigins }), pagoErrorHandler)
 
 
 app.use((_, res) => {

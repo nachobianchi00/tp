@@ -1,11 +1,49 @@
-import { EntityManager, LockMode } from '@mikro-orm/core'
+import { EntityManager, FlushMode, LockMode } from '@mikro-orm/core'
 import { orm } from '../shared/db/orm.js'
 import { ServiceError, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
 import { Producto } from '../producto/producto.entity.js'
 import { DetallePedido } from './detallePedido.entity.js'
 import { EstadoPedido, Pedido } from './pedido.entity.js'
+import type { AuthIdentity } from '../auth/auth.service.js'
 
 const em = orm.em
+
+function pedidoScope(identity: AuthIdentity) {
+  if (!identity || !Number.isSafeInteger(identity.id) || identity.id <= 0
+    || (identity.tipo !== 'cliente' && identity.tipo !== 'admin')) {
+    throw new ServiceError('No autenticado', 401)
+  }
+  return identity.tipo === 'admin' ? {} : { cliente: identity.id }
+}
+
+function detalleScope(identity: AuthIdentity) {
+  const scope = pedidoScope(identity)
+  return identity.tipo === 'admin' ? {} : { pedido: scope }
+}
+
+/** Bloquea el pedido y vuelve a leer el detalle para no modificar una relación desactualizada. */
+async function loadDetalleForChange(transactionalEm: EntityManager, id: number, identity: AuthIdentity) {
+  const candidate = await transactionalEm.findOne(DetallePedido, { id, ...detalleScope(identity) })
+  if (!candidate) throw new ServiceError('Detalle de pedido not found', 404)
+  const pedidoId = candidate.pedido?.id
+  if (pedidoId === undefined || !Number.isSafeInteger(pedidoId) || pedidoId <= 0) {
+    throw new Error('Order detail is missing its order ID')
+  }
+  const scope = pedidoScope(identity)
+  const pedido = await transactionalEm.findOne(
+    Pedido,
+    { id: pedidoId, ...scope },
+    { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+  )
+  if (!pedido) throw new ServiceError('Detalle de pedido not found', 404)
+  const detalle = await transactionalEm.findOne(
+    DetallePedido,
+    { id, pedido: { id: pedidoId, ...scope } },
+    { populate: ['producto'], lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+  )
+  if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
+  return { pedido, detalle }
+}
 
 function cents(value: unknown) {
   const amount = Number(value)
@@ -21,7 +59,10 @@ async function recalculatePedidoTotal(
   additionalDetails: DetallePedido[] = [],
   excludedDetailId?: number,
 ) {
-  const detalles = await transactionalEm.find(DetallePedido, { pedido }, { populate: ['producto'] })
+  // Evita guardar antes de validar el total o contar dos veces un detalle recién creado.
+  const detalles = await transactionalEm.find(DetallePedido, { pedido }, {
+    populate: ['producto'], flushMode: FlushMode.COMMIT,
+  })
   const costoEnvio = cents(pedido.metodoEnvio.costo)
   const totalEnCentavos = [
     ...detalles.filter(detalle => detalle.id !== excludedDetailId),
@@ -37,32 +78,32 @@ async function recalculatePedidoTotal(
   pedido.total = totalEnCentavos / 100
 }
 
-export async function findAllDetallesPedido() {
-  return em.find(DetallePedido, {}, { populate: ['pedido', 'producto'] })
+export async function findAllDetallesPedido(identity: AuthIdentity) {
+  return em.find(DetallePedido, detalleScope(identity), { populate: ['pedido', 'producto'] })
 }
 
-export async function findDetallePedido(id: number) {
-  const detalle = await em.findOne(DetallePedido, { id }, { populate: ['pedido', 'producto'] })
+export async function findDetallePedido(id: number, identity: AuthIdentity) {
+  const detalle = await em.findOne(DetallePedido, { id, ...detalleScope(identity) }, { populate: ['pedido', 'producto'] })
   if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
   return detalle
 }
 
-export async function createDetallePedido(value: unknown) {
+export async function createDetallePedido(value: unknown, identity: AuthIdentity) {
+  const scope = pedidoScope(identity)
   const body = requireRecord(value)
   const pedidoId = requirePositiveInteger(body.pedido, 'pedido')
   const productoId = requirePositiveInteger(body.producto, 'producto')
   const cantidad = requirePositiveInteger(body.cantidad, 'cantidad')
 
   return em.transactional(async transactionalEm => {
-    const [pedido, producto] = await Promise.all([
-      transactionalEm.findOne(
-        Pedido,
-        { id: pedidoId },
-        { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE },
-      ),
-      transactionalEm.findOne(Producto, { id: productoId }),
-    ])
+    const pedido = await transactionalEm.findOne(
+      Pedido,
+      { id: pedidoId, ...scope },
+      { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+    )
     if (!pedido) throw new ServiceError('Pedido not found', 404)
+    // El producto solo se consulta después de comprobar y bloquear el pedido autorizado.
+    const producto = await transactionalEm.findOne(Producto, { id: productoId }, { refresh: true })
     if (!producto) throw new ServiceError('Producto not found', 404)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
       throw new ServiceError('Only pending orders can be modified', 409)
@@ -88,7 +129,8 @@ export async function createDetallePedido(value: unknown) {
   })
 }
 
-export async function updateDetallePedido(id: number, value: unknown) {
+export async function updateDetallePedido(id: number, value: unknown, identity: AuthIdentity) {
+  detalleScope(identity)
   const body = requireRecord(value)
   if (Object.keys(body).some(field => field !== 'cantidad')) {
     throw new ServiceError('Only cantidad can be changed on a order detail', 400)
@@ -96,18 +138,7 @@ export async function updateDetallePedido(id: number, value: unknown) {
   const cantidad = requirePositiveInteger(body.cantidad, 'cantidad')
 
   return em.transactional(async transactionalEm => {
-    const detalle = await transactionalEm.findOne(
-      DetallePedido,
-      { id },
-      { populate: ['pedido', 'producto', 'pedido.metodoEnvio'] },
-    )
-    if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
-    const pedido = await transactionalEm.findOne(
-      Pedido,
-      { id: detalle.pedido.id },
-      { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE },
-    )
-    if (!pedido) throw new ServiceError('Pedido not found', 404)
+    const { detalle, pedido } = await loadDetalleForChange(transactionalEm, id, identity)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
       throw new ServiceError('Only pending orders can be modified', 409)
     }
@@ -127,20 +158,10 @@ export async function updateDetallePedido(id: number, value: unknown) {
   })
 }
 
-export async function deleteDetallePedido(id: number) {
+export async function deleteDetallePedido(id: number, identity: AuthIdentity) {
+  detalleScope(identity)
   await em.transactional(async transactionalEm => {
-    const detalle = await transactionalEm.findOne(
-      DetallePedido,
-      { id },
-      { populate: ['pedido', 'pedido.metodoEnvio'] },
-    )
-    if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
-    const pedido = await transactionalEm.findOne(
-      Pedido,
-      { id: detalle.pedido.id },
-      { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE },
-    )
-    if (!pedido) throw new ServiceError('Pedido not found', 404)
+    const { detalle, pedido } = await loadDetalleForChange(transactionalEm, id, identity)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
       throw new ServiceError('Only pending orders can be modified', 409)
     }

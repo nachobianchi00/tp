@@ -2,7 +2,7 @@ import { metodosEnvio } from '../../../mock/metodosEnvio';
 import { clienteMock } from '../../../mock/clients';
 import type { DeliveryData } from '../../../type/deliveryData';
 import type { DeliveryMethod } from '../../../type/deliveryMethod';
-import styles from './entrega.module.css';
+import styles from './delivery.module.css';
 
 interface EntregaProps {
   entregaData: DeliveryData;
