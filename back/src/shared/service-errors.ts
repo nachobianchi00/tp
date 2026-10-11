@@ -65,14 +65,24 @@ export function optionalString(value: unknown, field: string): string | undefine
   return requireString(value, field)
 }
 
+// parseRouteId usa estos dos TypeError como errores de validación públicos.
+// La lista es explícita: otros TypeError o RangeError pueden ser fallos internos.
+const publicRouteIdErrors = new Set([
+  'Route parameter id must be a single string',
+  'Route parameter id must be a safe integer',
+])
+
 export function sendServiceError(res: Response, error: unknown) {
-  if (error instanceof ServiceError) {
+  // Solo los errores de negocio 4xx tienen mensajes preparados para el consumidor.
+  if (error instanceof ServiceError && Number.isInteger(error.statusCode)
+    && error.statusCode >= 400 && error.statusCode < 500) {
     return res.status(error.statusCode).json({ message: error.message })
   }
-  if (error instanceof TypeError || error instanceof RangeError) {
+  if (error instanceof TypeError && publicRouteIdErrors.has(error.message)) {
     return res.status(400).json({ message: error.message })
   }
+  // No serializar el error, su mensaje, stack, cause ni valores de consultas.
   return res.status(500).json({
-    message: error instanceof Error ? error.message : String(error),
+    message: 'No se pudo procesar la solicitud',
   })
 }

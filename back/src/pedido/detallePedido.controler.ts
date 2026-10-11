@@ -1,6 +1,7 @@
-import { Request, Response } from 'express'
+import type { Request, Response, NextFunction, ErrorRequestHandler } from 'express'
 import { parseRouteId } from '../shared/route-params.js'
-import { sendServiceError } from '../shared/service-errors.js'
+import { ServiceError, isRecord } from '../shared/service-errors.js'
+import type { AuthIdentity } from '../auth/auth.service.js'
 import {
   createDetallePedido,
   deleteDetallePedido,
@@ -9,54 +10,91 @@ import {
   updateDetallePedido,
 } from './detallePedido.service.js'
 
-async function findAll(_req: Request, res: Response) {
+function authenticatedIdentity(res: Response): AuthIdentity {
+  if (!res.locals.identity) throw new ServiceError('No autenticado', 401)
+  return res.locals.identity
+}
+
+function detalleRouteId(req: Request): number {
   try {
-    res.json({ message: 'found all detalles de pedido', data: await findAllDetallesPedido() })
-  } catch (error: unknown) {
-    sendServiceError(res, error)
+    return parseRouteId(req.params.id)
+  } catch (error) {
+    if (error instanceof TypeError) throw new ServiceError(error.message, 400)
+    throw error
   }
 }
 
-async function findOne(req: Request, res: Response) {
+async function findAll(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json({ message: 'found all detalles de pedido', data: await findAllDetallesPedido(authenticatedIdentity(res)) })
+  } catch (error: unknown) {
+    next(error)
+  }
+}
+
+async function findOne(req: Request, res: Response, next: NextFunction) {
   try {
     res.json({
       message: 'found detalle de pedido',
-      data: await findDetallePedido(parseRouteId(req.params.id)),
+      data: await findDetallePedido(detalleRouteId(req), authenticatedIdentity(res)),
     })
   } catch (error: unknown) {
-    sendServiceError(res, error)
+    next(error)
   }
 }
 
-async function add(req: Request, res: Response) {
+async function add(req: Request, res: Response, next: NextFunction) {
   try {
     res.status(201).json({
       message: 'detalle de pedido created',
-      data: await createDetallePedido(req.body),
+      data: await createDetallePedido(req.body, authenticatedIdentity(res)),
     })
   } catch (error: unknown) {
-    sendServiceError(res, error)
+    next(error)
   }
 }
 
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response, next: NextFunction) {
   try {
     res.json({
       message: 'detalle de pedido updated',
-      data: await updateDetallePedido(parseRouteId(req.params.id), req.body),
+      data: await updateDetallePedido(detalleRouteId(req), req.body, authenticatedIdentity(res)),
     })
   } catch (error: unknown) {
-    sendServiceError(res, error)
+    next(error)
   }
 }
 
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response, next: NextFunction) {
   try {
-    await deleteDetallePedido(parseRouteId(req.params.id))
+    await deleteDetallePedido(detalleRouteId(req), authenticatedIdentity(res))
     res.json({ message: 'detalle de pedido deleted' })
   } catch (error: unknown) {
-    sendServiceError(res, error)
+    next(error)
   }
 }
 
 export { findAll, findOne, add, update, remove }
+
+/** Conserva errores previstos y oculta detalles internos del ORM, parser o sesión. */
+export const detallePedidoErrorHandler: ErrorRequestHandler = (error: unknown, _req, res, next) => {
+  if (res.headersSent) return next(error)
+  res.set('Cache-Control', 'no-store')
+  if (error instanceof ServiceError && [400, 401, 403, 404, 409].includes(error.statusCode)) {
+    res.status(error.statusCode).json({ message: error.message })
+    return
+  }
+  const parseErrors: Record<string, { status: number; message: string }> = {
+    'entity.parse.failed': { status: 400, message: 'JSON inválido' },
+    'entity.too.large': { status: 413, message: 'Solicitud demasiado grande' },
+    'charset.unsupported': { status: 415, message: 'Codificación no admitida' },
+    'encoding.unsupported': { status: 415, message: 'Codificación no admitida' },
+  }
+  const parserError = isRecord(error) && typeof error.type === 'string'
+    && Object.hasOwn(parseErrors, error.type) ? parseErrors[error.type] : undefined
+  if (parserError) {
+    res.status(parserError.status).json({ message: parserError.message })
+    return
+  }
+  res.status(500).json({ message: 'No se pudo procesar la solicitud de detalles de pedido' })
+}
