@@ -23,7 +23,8 @@ function App() {
           <Route path="/carrito" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/mi-cuenta" element={<MyAccount />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login key="cliente" tipo="cliente" />} />
+          <Route path="/admin/login" element={<Login key="admin" tipo="admin" />} />
           <Route path="/registro" element={<Register />} />
         </Routes>
       </main>

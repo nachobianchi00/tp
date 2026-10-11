@@ -81,7 +81,7 @@ export default function Register() {
 
   return (
     <section className={styles.container} aria-labelledby="register-title" aria-busy={submitting}>
-      <h1 id="register-title">Crear cuenta de Cliente</h1>
+      <h1 id="register-title">Crear cuenta</h1>
       {error && <p className={styles.error} role="alert">{error}</p>}
 
       {success ? (
@@ -126,7 +126,7 @@ export default function Register() {
               value={form.confirmPassword} onChange={event => updateField('confirmPassword', event.target.value)} />
 
             <button className={styles.button} type="submit">
-              {submitting ? 'Creando cuenta…' : 'Crear cuenta'}
+              {submitting ? 'Creando cuenta…' : 'Registrarse'}
             </button>
           </fieldset>
           <Link className={styles.link} to="/login">Ya tengo una cuenta</Link>

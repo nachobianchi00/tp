@@ -4,11 +4,10 @@ import { useAuth } from '../../context/authContext/useAuth';
 import type { AccountType } from '../../type/authType';
 import styles from './login.module.css';
 
-export default function Login() {
+export default function Login({ tipo }: { tipo: AccountType }) {
   const { identity, checking, submitting, error, login, logout, refreshSession } = useAuth();
   const [mail, setMail] = useState('');
   const [password, setPassword] = useState('');
-  const [tipo, setTipo] = useState<AccountType>('cliente');
   const [validationError, setValidationError] = useState<string | null>(null);
   const disabled = checking || submitting;
 
@@ -30,7 +29,7 @@ export default function Login() {
 
   return (
     <section className={styles.container} aria-labelledby="login-title" aria-busy={disabled}>
-      <h1 id="login-title">{identity ? 'Sesión iniciada' : 'Iniciar sesión'}</h1>
+      <h1 id="login-title">Iniciar sesión</h1>
       {checking && <p role="status">Comprobando sesión…</p>}
       {(validationError || error) && <p className={styles.error} role="alert">{validationError || error}</p>}
 
@@ -52,13 +51,6 @@ export default function Login() {
             <label htmlFor="login-password">Contraseña</label>
             <input id="login-password" name="password" type="password" autoComplete="current-password" required
               value={password} onChange={event => setPassword(event.target.value)} />
-
-            <label htmlFor="login-tipo">Tipo de cuenta</label>
-            <select id="login-tipo" name="tipo" value={tipo}
-              onChange={event => setTipo(event.target.value === 'admin' ? 'admin' : 'cliente')}>
-              <option value="cliente">Cliente</option>
-              <option value="admin">Administrador</option>
-            </select>
 
             <button className={styles.button} type="submit">
               {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
