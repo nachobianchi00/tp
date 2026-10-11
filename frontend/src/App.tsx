@@ -8,6 +8,7 @@ import MyAccount from './page/myAccount/myAccount';
 import styles from './app.module.css';
 import Home from './page/home/home';
 import Login from './page/login/login';
+import Register from './page/register/register';
 import { AuthProvider } from './context/authContext/authProvider';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/mi-cuenta" element={<MyAccount />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Register />} />
         </Routes>
       </main>
       <Footer />

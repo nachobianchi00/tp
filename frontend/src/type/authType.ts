@@ -10,3 +10,13 @@ export interface LoginCredentials {
   password: string;
   tipo: AccountType;
 }
+
+export interface RegisterClientData {
+  nombre: string;
+  apellido: string;
+  dni: number;
+  direccion: string;
+  telefono: string;
+  mail: string;
+  password: string;
+}

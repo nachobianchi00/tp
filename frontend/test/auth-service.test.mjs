@@ -218,3 +218,151 @@ test('las instancias de servicio no comparten tokens', async () => {
   assert.equal(await first.service.getCsrfToken(), anonymousToken);
   assert.equal(await second.service.getCsrfToken(), authenticatedToken);
 });
+
+const clientData = {
+  nombre: '  Ana  ', apellido: '  Prueba  ', dni: 12345678,
+  direccion: '  Calle ficticia 123  ', telefono: '  +54 341 1234567  ',
+  mail: '  CLIENTE@example.com  ', password: '  Clave ficticia ñ 123!  ',
+};
+const createdClient = { message: 'cliente created', data: { id: 12, nombre: 'Ana' } };
+
+test('registro 201: obtiene CSRF y envía solo los siete campos, con cookies y contraseña original', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(createdClient, 201));
+  assert.equal(await service.registerCliente({ ...clientData, confirmPassword: clientData.password, tipo: 'admin', id: 999 }), undefined);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, '/api/auth/csrf');
+  assert.equal(calls[1].url, '/api/clientes');
+  assert.equal(calls[1].options.method, 'POST');
+  assert.equal(calls[1].options.headers['Content-Type'], 'application/json');
+  assert.equal(calls[1].options.headers['X-CSRF-Token'], anonymousToken);
+  assert.ok(calls.every(call => call.options.credentials === 'include' && call.options.cache === 'no-store'));
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    nombre: 'Ana', apellido: 'Prueba', dni: 12345678,
+    direccion: 'Calle ficticia 123', telefono: '+54 341 1234567',
+    mail: 'cliente@example.com', password: clientData.password,
+  });
+  // El registro no regenera la sesión ni entrega identidad: conserva el token existente.
+  assert.equal(await service.getCsrfToken(), anonymousToken);
+  assert.equal(calls.length, 2);
+});
+
+test('registro obtiene un token vigente aunque ya exista uno en memoria', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }),
+    json(createdClient, 201));
+  await service.getCsrfToken();
+  await service.registerCliente(clientData);
+  assert.equal(calls[2].options.headers['X-CSRF-Token'], renewedToken);
+});
+
+test('registro no transforma el objeto recibido ni conserva los datos de la cuenta', async () => {
+  const input = Object.freeze({ ...clientData });
+  const { service } = simulated(json({ csrfToken: anonymousToken }),
+    json({ ...createdClient, data: { id: 12, password: 'hash-ficticio', mail: 'privado@example.com' } }, 201));
+  assert.equal(await service.registerCliente(input), undefined);
+  assert.deepEqual(input, clientData);
+});
+
+for (const password of ['a', '  á ñ 🙂  ', '密码']) {
+  test(`registro envía sin transformar una contraseña válida: ${JSON.stringify(password)}`, async () => {
+    const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(createdClient, 201));
+    await service.registerCliente({ ...clientData, password });
+    assert.equal(JSON.parse(calls[1].options.body).password, password);
+  });
+}
+
+for (const status of [400, 409, 403, 500]) {
+  test(`registro ${status}: mensaje seguro, token descartado y ninguna repetición del POST`, async () => {
+    const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
+      json({ message: 'SQL password cookie secreto-ficticio /ruta/interna' }, status),
+      json({ csrfToken: renewedToken }));
+    await assert.rejects(service.registerCliente(clientData), error => {
+      assert.ok(error instanceof AuthError);
+      assert.equal(error.kind, 'http');
+      assert.equal(error.status, status);
+      assert.ok(!/SQL|password|cookie|secreto-ficticio|ruta\/interna/.test(error.message));
+      if (status === 400) assert.equal(error.message, 'Revisá los datos ingresados para crear la cuenta.');
+      if (status === 409) assert.equal(error.message, 'Ya existe una cuenta con esos datos.');
+      return true;
+    });
+    assert.equal(calls.length, 2);
+    assert.equal(await service.getCsrfToken(), renewedToken);
+    assert.equal(calls.filter(call => call.options.method === 'POST').length, 1);
+  });
+}
+
+for (const csrfToken of [undefined, null, '', 'manipulado', 'f'.repeat(63), 'g'.repeat(64)]) {
+  test(`CSRF inválido impide enviar el registro: ${String(csrfToken)}`, async () => {
+    const { service, calls } = simulated(json({ csrfToken }));
+    await assert.rejects(service.registerCliente(clientData), AuthError);
+    assert.equal(calls.length, 1);
+    assert.equal(calls.filter(call => call.options.method === 'POST').length, 0);
+  });
+}
+
+test('fallo de conexión al obtener CSRF impide enviar el registro', async () => {
+  const { service, calls } = simulated(new TypeError('fallo ficticio de conexión'));
+  await assert.rejects(service.registerCliente(clientData), error => error instanceof AuthError && error.kind === 'network');
+  assert.equal(calls.length, 1);
+});
+
+test('CSRF rechazado impide enviar los datos de registro', async () => {
+  const { service, calls } = simulated(json({ message: 'Solicitud CSRF inválida' }, 403));
+  await assert.rejects(service.registerCliente(clientData), error => error.status === 403);
+  assert.equal(calls.length, 1);
+});
+
+test('una respuesta perdida del registro no provoca otra escritura', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), new TypeError('respuesta perdida ficticia'),
+    json({ csrfToken: renewedToken }));
+  await assert.rejects(service.registerCliente(clientData), error => error instanceof AuthError && error.kind === 'network');
+  assert.equal(calls.length, 2);
+  assert.equal(await service.getCsrfToken(), renewedToken);
+  assert.equal(calls.filter(call => call.options.method === 'POST').length, 1);
+});
+
+for (const body of [null, [], {}, { message: 'cliente created' },
+  { message: 'cliente created', data: { id: '12' } }, { message: 'cliente created', data: { id: 0 } }]) {
+  test(`registro rechaza un 201 con cuerpo inválido: ${JSON.stringify(body)}`, async () => {
+    const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(body, 201));
+    await assert.rejects(service.registerCliente(clientData), error => error instanceof AuthError && error.kind === 'response');
+    assert.equal(calls.filter(call => call.options.method === 'POST').length, 1);
+  });
+}
+
+for (const status of [200, 202, 204]) {
+  test(`registro no confunde un ${status} con la creación 201 esperada`, async () => {
+    const response = status === 204 ? new Response(null, { status }) : json(createdClient, status);
+    const { service } = simulated(json({ csrfToken: anonymousToken }), response);
+    await assert.rejects(service.registerCliente(clientData), error => error instanceof AuthError && error.kind === 'response');
+  });
+}
+
+test('registro no considera éxito una respuesta 201 con HTML', async () => {
+  const { service } = simulated(json({ csrfToken: anonymousToken }), new Response('<html>detalle interno</html>', { status: 201 }));
+  await assert.rejects(service.registerCliente(clientData), error => error instanceof AuthError
+    && error.kind === 'response' && !error.message.includes('detalle interno'));
+});
+
+test('registro anónimo no inicia sesión automáticamente', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(createdClient, 201),
+    json({ message: 'No autenticado' }, 401));
+  await service.registerCliente(clientData);
+  assert.equal(calls.length, 2);
+  assert.equal(calls.filter(call => call.url === '/api/auth/login' || call.url === '/api/auth/me').length, 0);
+  assert.equal(await service.me(), null);
+});
+
+test('registrar un Cliente desde una sesión Admin no altera el login ni el logout existentes', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
+    json({ data: { id: 7, tipo: 'admin' }, csrfToken: authenticatedToken }),
+    json({ csrfToken: renewedToken }), json(createdClient, 201),
+    json({ data: { id: 7, tipo: 'admin' } }), json({ csrfToken: authenticatedToken }),
+    json({ message: 'Sesión cerrada' }), json({ csrfToken: anonymousToken }));
+  await service.login({ ...credentials, tipo: 'admin' });
+  await service.registerCliente(clientData);
+  assert.equal(calls[3].options.headers['X-CSRF-Token'], renewedToken);
+  assert.deepEqual(await service.me(), { id: 7, tipo: 'admin' });
+  await service.logout();
+  assert.equal(await service.getCsrfToken(), anonymousToken);
+  assert.equal(calls.filter(call => call.url === '/api/auth/login').length, 1);
+});
