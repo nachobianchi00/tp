@@ -11,6 +11,7 @@ import session from 'express-session'
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy'
 import { MikroORM, MySqlConnection } from '@mikro-orm/mysql'
 import { hashPassword, verifyPassword } from '../src/shared/security/password.ts'
+import { FlushMode, ForeignKeyConstraintViolationException, IsolationLevel, LockMode } from '@mikro-orm/core'
 
 // Desde back/, Node 24: node --experimental-test-module-mocks --test test/client-access.test.mjs
 // Router, controladores y servicios reales; cuentas simuladas, sin index.ts ni conexiones a MySQL.
@@ -20,18 +21,21 @@ const origin = 'https://minigo.example'
 const password = '  Contraseña ficticia de clientes 123!  '
 const testSecret = 'secreto-ficticio-exclusivo-de-pruebas-de-clientes-1234567890'
 const internalDetail = 'detalle-interno-ficticio-del-almacen'
-const blockedMessage = 'La eliminación de clientes está temporalmente bloqueada'
 const originalEnv = { secret: process.env.SESSION_SECRET, nodeEnv: process.env.NODE_ENV }
 const guards = []
 let ormMock, metadataOrm, entities, storedHash, records, writes, queries
 let createClienteRouter, clienteAccessErrorHandler, createAuthRouter, authErrorHandler
 let createSessionMiddleware, SESSION_TTL_MS
+let deleteCliente, orders, transactionEvents, transactionFailure, beforeOrderCount
 
 function matches(record, Entity, criteria) {
   return record instanceof Entity && Object.entries(criteria).every(([key, value]) => record[key] === value)
 }
 // Solo este doble almacena las cuentas; metadataOrm se usa exclusivamente para la serialización real.
 const em = {
+  async count(Entity, criteria) {
+    return records.filter(record => record instanceof Entity && record.id === criteria.id).length
+  },
   async find(Entity, criteria) {
     queries.push({ operation: 'find', Entity, criteria })
     return records.filter(record => matches(record, Entity, criteria))
@@ -51,8 +55,51 @@ const em = {
     Object.assign(account, input)
   },
   async flush() { writes.flushed++ },
+  async transactional(callback, options) {
+    assert.deepEqual(options, { clear: true, flushMode: FlushMode.COMMIT, isolationLevel: IsolationLevel.READ_COMMITTED })
+    const removed = []
+    transactionEvents.push('begin')
+    const tx = {
+      async findOne(Entity, criteria, findOptions) {
+        assert.equal(Entity, entities.Cliente)
+        assert.deepEqual(findOptions, {
+          lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true, populate: false, flushMode: FlushMode.COMMIT,
+        })
+        transactionEvents.push('lock')
+        if (transactionFailure === 'lock') throw new Error(internalDetail)
+        return records.find(record => matches(record, Entity, criteria)) ?? null
+      },
+      async count(Entity, criteria, countOptions) {
+        assert.equal(Entity, entities.Pedido)
+        assert.deepEqual(countOptions, { flushMode: FlushMode.COMMIT })
+        transactionEvents.push('count')
+        beforeOrderCount?.()
+        if (transactionFailure === 'count') throw new Error(internalDetail)
+        return orders.filter(order => order.cliente.id === criteria.cliente).length
+      },
+      remove(record) {
+        assert.ok(record instanceof entities.Cliente, 'Nunca elimina pedidos')
+        transactionEvents.push('remove')
+        removed.push(record)
+      },
+      async flush() {
+        transactionEvents.push('flush')
+        if (transactionFailure === 'fk') throw new ForeignKeyConstraintViolationException(new Error(internalDetail))
+        if (transactionFailure === 'flush') throw new Error(internalDetail)
+      },
+    }
+    try {
+      await callback(tx)
+      if (transactionFailure === 'commit') throw new Error(internalDetail)
+      records = records.filter(record => !removed.includes(record))
+      transactionEvents.push('commit')
+    } catch (error) {
+      transactionEvents.push('rollback')
+      throw error
+    }
+  },
 }
-for (const method of ['remove', 'persist', 'transactional']) {
+for (const method of ['remove', 'persist']) {
   const guard = mock.fn(() => { throw new Error(`Estas pruebas no permiten ${method}`) })
   em[method] = guard
   guards.push(guard)
@@ -83,6 +130,7 @@ before(async () => {
   ;({ createClienteRouter, clienteAccessErrorHandler } = await load('cliente/cliente.routes.js'))
   ;({ createAuthRouter } = await load('auth/auth.routes.js'))
   ;({ authErrorHandler } = await load('auth/auth.controler.js'))
+  ;({ deleteCliente } = await load('cliente/cliente.service.js'))
   ;({ createSessionMiddleware, SESSION_TTL_MS } = await load('shared/security/session.js'))
   entities = {}
   for (const [name, path] of [
@@ -113,6 +161,10 @@ beforeEach(() => {
   for (const record of records) record.password = storedHash
   writes = { created: 0, assigned: 0, flushed: 0 }
   queries = []
+  orders = []
+  transactionEvents = []
+  transactionFailure = undefined
+  beforeOrderCount = undefined
 })
 
 after(async () => {
@@ -505,14 +557,14 @@ for (const [method, path] of [['POST', '/api/clientes'], ['PUT', '/api/clientes/
 }
 
 for (const tipo of ['cliente', 'admin']) {
-  test(`DELETE queda bloqueado para ${tipo} con CSRF válido sin invocar el servicio`, async t => {
+  test(`DELETE rechaza cuentas ajenas o rol incorrecto para ${tipo} sin invocar el servicio`, async t => {
     const { call, authenticate } = await harness(t)
     const { cookie, token } = await authenticate(tipo)
-    for (const id of [7, 8, 999]) {
+    for (const id of (tipo === 'cliente' ? [8, 999] : [7, 8, 999])) {
       const before = snapshot()
       const response = await call(`/api/clientes/${id}`, { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
       assert.equal(response.status, 403)
-      assert.deepEqual(response.body, { message: blockedMessage })
+      assert.deepEqual(response.body, { message: 'Acceso no autorizado' })
       assertSafe(response)
       assertUntouched(before)
     }
@@ -638,5 +690,203 @@ test('no se agregan métodos nuevos y otros prefijos mantienen su acceso públic
   }
   const { cookie } = await authenticate()
   assert.equal((await call('/api/clientes/7', { method: 'PATCH', cookie: cookie.pair })).status, 404)
+})
+
+test('baja propia sin pedidos: confirma la transacción, destruye sesión y borra cookie', async t => {
+  const { call, authenticate, store } = await harness(t)
+  const { cookie, token } = await authenticate()
+  const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
+  assert.equal(response.status, 200)
+  assert.deepEqual(response.body, { message: 'cliente deleted' })
+  assertSafe(response)
+  assert.equal(records.some(record => record instanceof entities.Cliente && record.id === 7), false)
+  assert.ok(records.some(record => record instanceof entities.Cliente && record.id === 8))
+  assert.deepEqual(transactionEvents, ['begin', 'lock', 'count', 'remove', 'flush', 'commit'])
+  assert.equal(await getStored(store, cookie.sid), undefined)
+  const cleared = response.headers['set-cookie'].find(header => header.startsWith('minigo.sid='))
+  assert.match(cleared, /Path=\/api/)
+  assert.match(cleared, /Expires=Thu, 01 Jan 1970/)
+  assert.match(cleared, /HttpOnly/)
+  assert.match(cleared, /SameSite=Lax/)
+  assert.equal((await call('/api/auth/me', { cookie: cookie.pair })).status, 401)
+})
+
+for (const estado of ['pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado']) {
+  test(`pedido ${estado}: rechaza la baja con 409 sin modificar cuenta, pedido ni sesión`, async t => {
+    const { call, authenticate, store } = await harness(t)
+    const { cookie, token } = await authenticate()
+    const cliente = records.find(record => record instanceof entities.Cliente && record.id === 7)
+    orders.push({ id: 1, cliente, estado })
+    const before = snapshot()
+    const stored = await getStored(store, cookie.sid)
+    const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
+    assert.equal(response.status, 409)
+    assert.match(response.body.message, /pedidos registrados/)
+    assertSafe(response)
+    assertUntouched(before)
+    assert.deepEqual(transactionEvents, ['begin', 'lock', 'count', 'rollback'])
+    assert.deepEqual(orders, [{ id: 1, cliente, estado }])
+    assert.deepEqual((await getStored(store, cookie.sid)).identity, stored.identity)
+    assert.equal((await call('/api/auth/me', { cookie: cookie.pair })).status, 200)
+    assert.equal(response.headers['set-cookie'], undefined)
+  })
+}
+
+test('pedidos de otro cliente no impiden eliminar la cuenta propia', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie, token } = await authenticate()
+  const other = records.find(record => record instanceof entities.Cliente && record.id === 8)
+  orders.push({ id: 1, cliente: other, estado: 'pendiente' })
+  assert.equal((await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })).status, 200)
+  assert.equal(orders[0].cliente, other)
+})
+
+test('baja invalida otras sesiones del Cliente, nuevo login falla y Admin con igual ID sigue válido', async t => {
+  const { call, authenticate, store, bootstrap } = await harness(t)
+  const first = await authenticate()
+  const second = await authenticate()
+  const admin = await authenticate('admin')
+  assert.equal((await call('/api/clientes/7', { method: 'DELETE', cookie: first.cookie.pair,
+    token: first.token, sourceOrigin: origin })).status, 200)
+  assert.equal((await call('/api/clientes/7', { cookie: second.cookie.pair })).status, 401)
+  assert.equal(await getStored(store, second.cookie.sid), undefined)
+  assert.equal((await call('/api/auth/me', { cookie: second.cookie.pair })).status, 401)
+  assert.equal((await call('/api/auth/me', { cookie: admin.cookie.pair })).status, 200)
+  const anonymous = await bootstrap()
+  const login = await call('/api/auth/login', { method: 'POST', cookie: anonymous.cookie.pair,
+    token: anonymous.token, sourceOrigin: origin, body: { tipo: 'cliente', mail: 'cliente@example.test', password } })
+  assert.equal(login.status, 401)
+  assert.deepEqual(login.body, { message: 'Credenciales inválidas' })
+})
+
+test('CSRF manipulado no llega a la transacción de borrado', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie, token } = await authenticate()
+  const before = snapshot()
+  const invalid = (token[0] === 'a' ? 'b' : 'a') + token.slice(1)
+  const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token: invalid, sourceOrigin: origin })
+  assert.equal(response.status, 403)
+  assertUntouched(before)
+  assert.deepEqual(transactionEvents, [])
+})
+
+for (const failure of ['lock', 'count', 'flush', 'commit']) {
+  test(`fallo de BD en ${failure}: 500 genérico, rollback y sesión conservada`, async t => {
+    const { call, authenticate, store } = await harness(t)
+    const { cookie, token } = await authenticate()
+    const before = snapshot()
+    transactionFailure = failure
+    const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
+    assert.equal(response.status, 500)
+    assert.deepEqual(response.body, { message: 'No se pudo procesar la solicitud' })
+    assertSafe(response)
+    assertUntouched(before)
+    assert.equal(transactionEvents.at(-1), 'rollback')
+    assert.ok((await getStored(store, cookie.sid)).identity)
+    assert.equal((await call('/api/auth/me', { cookie: cookie.pair })).status, 200)
+  })
+}
+
+test('violación referencial simulada devuelve 409 y conserva la cuenta y sesión', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie, token } = await authenticate()
+  transactionFailure = 'fk'
+  const before = snapshot()
+  const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
+  assert.equal(response.status, 409)
+  assertSafe(response)
+  assertUntouched(before)
+  assert.equal((await call('/api/auth/me', { cookie: cookie.pair })).status, 200)
+})
+
+test('servicio devuelve 404 si la cuenta ya no existe al tomar el bloqueo', async () => {
+  const before = snapshot()
+  await assert.rejects(deleteCliente(999), error => error.statusCode === 404)
+  assertUntouched(before)
+  assert.deepEqual(transactionEvents, ['begin', 'lock', 'rollback'])
+})
+
+test('vuelve a contar dentro de la transacción y rechaza un pedido aparecido antes de la consulta', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie, token } = await authenticate()
+  beforeOrderCount = () => orders.push({ id: 1, cliente: { id: 7 } })
+  const response = await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })
+  assert.equal(response.status, 409)
+  assert.deepEqual(transactionEvents, ['begin', 'lock', 'count', 'rollback'])
+  assert.ok(records.some(record => record instanceof entities.Cliente && record.id === 7))
+})
+
+test('fallo del almacén tras el borrado no informa éxito; borra cookie y ninguna sesión concede acceso', async t => {
+  const { call, authenticate, store } = await harness(t)
+  const first = await authenticate()
+  const second = await authenticate()
+  const destroyMock = t.mock.method(store, 'destroy', (_sid, callback) => callback(new Error(internalDetail)))
+  const response = await call('/api/clientes/7', { method: 'DELETE', cookie: first.cookie.pair,
+    token: first.token, sourceOrigin: origin })
+  assert.equal(response.status, 500)
+  assertSafe(response)
+  assert.ok(response.headers['set-cookie'].some(header => /Expires=Thu, 01 Jan 1970/.test(header)))
+  assert.equal(records.some(record => record instanceof entities.Cliente && record.id === 7), false)
+  assert.equal((await call('/api/clientes/7', { cookie: second.cookie.pair })).status, 500)
+  destroyMock.mock.restore()
+  assert.equal((await call('/api/clientes/7', { cookie: second.cookie.pair })).status, 401)
+})
+
+test('fallo al comprobar existencia rechaza acceso sin usar la identidad antigua', async t => {
+  const { call, authenticate, store } = await harness(t)
+  const { cookie, token } = await authenticate()
+  const before = snapshot()
+  const countMock = t.mock.method(em, 'count', async () => { throw new Error(internalDetail) })
+  for (const path of ['/api/auth/me', '/api/clientes/7']) {
+    const response = await call(path, { cookie: cookie.pair })
+    assert.equal(response.status, 500)
+    assertSafe(response)
+  }
+  assert.equal((await call('/api/clientes/7', { method: 'DELETE', cookie: cookie.pair, token, sourceOrigin: origin })).status, 500)
+  assertUntouched(before)
+  assert.deepEqual(transactionEvents, [])
+  assert.ok((await getStored(store, cookie.sid)).identity)
+  countMock.mock.restore()
+  assert.equal((await call('/api/auth/me', { cookie: cookie.pair })).status, 200)
+})
+
+test('metadata: Cliente no elimina pedidos por cascada; Pedido.cliente es obligatorio', () => {
+  const clientRelation = metadataOrm.getMetadata().get('Cliente').properties.pedidos
+  const orderRelation = metadataOrm.getMetadata().get('Pedido').properties.cliente
+  assert.equal(clientRelation.cascade.includes('remove'), false)
+  assert.notEqual(clientRelation.orphanRemoval, true)
+  assert.notEqual(orderRelation.nullable, true)
+  assert.notEqual(orderRelation.deleteRule, 'cascade')
+  assert.notEqual(orderRelation.deleteRule, 'set null')
+})
+
+test('GET individual de Cliente comprueba la cuenta una sola vez y conserva 200, 400 y 403', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie } = await authenticate()
+  const consultas = t.mock.method(em, 'count')
+  for (const [id, status] of [['7', 200], ['8', 403], ['999', 403], ['7otro', 400], ['0', 400]]) {
+    consultas.mock.resetCalls()
+    const response = await call(`/api/clientes/${id}`, { cookie: cookie.pair })
+    assert.equal(response.status, status)
+    assertSafe(response)
+    assert.equal(consultas.mock.callCount(), 1)
+    assert.deepEqual(consultas.mock.calls[0].arguments, [entities.Cliente, { id: 7 }])
+  }
+  assert.deepEqual(writes, { created: 0, assigned: 0, flushed: 0 })
+})
+
+test('GET individual de Admin comprueba la cuenta una sola vez y conserva acceso y 404', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie } = await authenticate('admin')
+  const consultas = t.mock.method(em, 'count')
+  for (const [id, status] of [['7', 200], ['8', 200], ['999', 404]]) {
+    consultas.mock.resetCalls()
+    const response = await call(`/api/clientes/${id}`, { cookie: cookie.pair })
+    assert.equal(response.status, status)
+    assertSafe(response)
+    assert.equal(consultas.mock.callCount(), 1)
+    assert.deepEqual(consultas.mock.calls[0].arguments, [entities.Admin, { id: 7 }])
+  }
+  assert.deepEqual(writes, { created: 0, assigned: 0, flushed: 0 })
 })
 

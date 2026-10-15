@@ -38,6 +38,11 @@ function cloneGraph() {
 }
 
 const em = {
+  // Las sesiones de estas pruebas pertenecen a cuentas ficticias de ID 7.
+  async count(Entity, criteria) {
+    assert.ok(['Cliente', 'Admin'].includes(Entity.name))
+    return criteria.id === 7 ? 1 : 0
+  },
   async findOne(Entity, criteria, options) {
     assert.equal(Entity, Categoria)
     queries.push({ context: 'outer', criteria, options })

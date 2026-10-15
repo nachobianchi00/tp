@@ -6,124 +6,129 @@ import type {} from './session.types.js'
 
 export const CSRF_HEADER_NAME = 'x-csrf-token'
 export const CSRF_TOKEN_TTL_MS = SESSION_TTL_MS
-const TOKEN_FORMAT = /^[a-f0-9]{64}$/
-const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
-type SessionRequest = Pick<Request, 'session' | 'sessionID'>
-type OriginRequest = Pick<Request, 'headers'>
-type StoredToken = NonNullable<Request['session']['csrf']>
+const FORMATO_TOKEN = /^[a-f0-9]{64}$/
+const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS'])
+type SolicitudConSesion = Pick<Request, 'session' | 'sessionID'>
+type SolicitudConCabeceras = Pick<Request, 'headers'>
+type TokenDeSesion = NonNullable<Request['session']['csrf']>
 
-function forbidden(): ServiceError {
+function errorCsrf(): ServiceError {
   return new ServiceError('Solicitud CSRF inválida', 403)
 }
 
 // La fecha se guarda solo en el servidor; el token no contiene ID, identidad ni vencimiento.
-function sessionDeadline(current: Request['session'], now: number): number {
-  if (current.identity === undefined && current.authenticatedAt === undefined) {
-    return now + CSRF_TOKEN_TTL_MS
+function calcularVencimiento(sesion: Request['session'], ahora: number): number {
+  if (sesion.identity === undefined && sesion.authenticatedAt === undefined) {
+    return ahora + CSRF_TOKEN_TTL_MS
   }
-  const start = current.authenticatedAt
-  if (!current.identity || typeof start !== 'number' || !Number.isSafeInteger(start)
-    || start <= 0 || start > now || now - start >= SESSION_TTL_MS) {
-    throw forbidden()
+  const inicio = sesion.authenticatedAt
+  if (!sesion.identity || typeof inicio !== 'number' || !Number.isSafeInteger(inicio)
+    || inicio <= 0 || inicio > ahora || ahora - inicio >= SESSION_TTL_MS) {
+    throw errorCsrf()
   }
-  return start + SESSION_TTL_MS
+  return inicio + SESSION_TTL_MS
 }
 
-function usableToken(state: StoredToken | undefined, sessionId: string, deadline: number, now: number): state is StoredToken {
-  return state !== undefined && state !== null && typeof state === 'object'
-    && state.sessionId === sessionId && typeof state.token === 'string' && TOKEN_FORMAT.test(state.token)
-    && Number.isSafeInteger(state.expiresAt) && state.expiresAt > now && state.expiresAt <= deadline
+function esTokenVigente(
+  tokenGuardado: TokenDeSesion | undefined,
+  idSesion: string,
+  vencimiento: number,
+  ahora: number,
+): tokenGuardado is TokenDeSesion {
+  return tokenGuardado !== undefined && tokenGuardado !== null && typeof tokenGuardado === 'object'
+    && tokenGuardado.sessionId === idSesion && typeof tokenGuardado.token === 'string' && FORMATO_TOKEN.test(tokenGuardado.token)
+    && Number.isSafeInteger(tokenGuardado.expiresAt) && tokenGuardado.expiresAt > ahora && tokenGuardado.expiresAt <= vencimiento
 }
 
-/** Token sincronizado de OWASP, incluso anónimo. El futuro endpoint lo entregará como JSON con Cache-Control:no-store. */
-export async function getCsrfToken(request: SessionRequest): Promise<string> {
-  const current = request.session
-  const sessionId = request.sessionID
-  if (!current || typeof sessionId !== 'string' || !sessionId || current.id !== sessionId) {
+/** Obtiene o genera el token asociado a esta sesión, incluso si es anónima. */
+export async function getCsrfToken(solicitud: SolicitudConSesion): Promise<string> {
+  const sesion = solicitud.session
+  const idSesion = solicitud.sessionID
+  if (!sesion || typeof idSesion !== 'string' || !idSesion || sesion.id !== idSesion) {
     throw new ServiceError('No se pudo preparar la protección CSRF', 500)
   }
-  const now = Date.now()
-  const deadline = sessionDeadline(current, now)
-  if (usableToken(current.csrf, sessionId, deadline, now)) return current.csrf.token
+  const ahora = Date.now()
+  const vencimiento = calcularVencimiento(sesion, ahora)
+  if (esTokenVigente(sesion.csrf, idSesion, vencimiento, ahora)) return sesion.csrf.token
 
   try {
-    current.csrf = {
+    sesion.csrf = {
       token: randomBytes(32).toString('hex'),
-      sessionId,
-      expiresAt: Math.min(now + CSRF_TOKEN_TTL_MS, deadline),
+      sessionId: idSesion,
+      expiresAt: Math.min(ahora + CSRF_TOKEN_TTL_MS, vencimiento),
     }
     // saveUninitialized:false requiere modificar y guardar la sesión anónima antes de devolver el token.
     await new Promise<void>((resolve, reject) => {
-      current.save(error => error ? reject(error) : resolve())
+      sesion.save(error => error ? reject(error) : resolve())
     })
-    return current.csrf.token
+    return sesion.csrf.token
   } catch {
-    delete current.csrf
+    delete sesion.csrf
     throw new ServiceError('No se pudo preparar la protección CSRF', 500)
   }
 }
 
 /** Validación sin generación; el middleware toma el token exclusivamente de X-CSRF-Token. */
-export function validateCsrfToken(request: SessionRequest, token: unknown): void {
-  const current = request.session
-  const sessionId = request.sessionID
-  if (!current || typeof sessionId !== 'string' || !sessionId || current.id !== sessionId
-    || typeof token !== 'string' || !TOKEN_FORMAT.test(token)) throw forbidden()
-  const now = Date.now()
-  const deadline = sessionDeadline(current, now)
-  if (!usableToken(current.csrf, sessionId, deadline, now)) throw forbidden()
+export function validateCsrfToken(solicitud: SolicitudConSesion, token: unknown): void {
+  const sesion = solicitud.session
+  const idSesion = solicitud.sessionID
+  if (!sesion || typeof idSesion !== 'string' || !idSesion || sesion.id !== idSesion
+    || typeof token !== 'string' || !FORMATO_TOKEN.test(token)) throw errorCsrf()
+  const ahora = Date.now()
+  const vencimiento = calcularVencimiento(sesion, ahora)
+  if (!esTokenVigente(sesion.csrf, idSesion, vencimiento, ahora)) throw errorCsrf()
   // Ambas entradas se validaron con la misma longitud y codificación antes de usar la función nativa.
-  if (!timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(current.csrf.token, 'hex'))) throw forbidden()
+  if (!timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(sesion.csrf.token, 'hex'))) throw errorCsrf()
 }
 
-function parseSource(value: unknown, originOnly: boolean): URL | null {
-  if (typeof value !== 'string' || !/^https?:\/\/[^/?#]/i.test(value)
-    || value !== value.trim() || /[\s\u0000-\u001f\u007f\\]/.test(value)) return null
+function leerOrigen(valor: unknown, soloOrigen: boolean): URL | null {
+  if (typeof valor !== 'string' || !/^https?:\/\/[^/?#]/i.test(valor)
+    || valor !== valor.trim() || /[\s\u0000-\u001f\u007f\\]/.test(valor)) return null
   try {
-    const url = new URL(value)
+    const url = new URL(valor)
     if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password) return null
-    if (originOnly && value !== url.origin) return null
+    if (soloOrigen && valor !== url.origin) return null
     return url
   } catch {
     return null
   }
 }
 
-function configuredOrigins(origins: readonly string[]): Set<string> {
-  if (!Array.isArray(origins) || origins.length === 0) {
+function prepararOrigenes(origenes: readonly string[]): Set<string> {
+  if (!Array.isArray(origenes) || origenes.length === 0) {
     throw new Error('CSRF requires an explicit list of allowed origins')
   }
-  const allowed = new Set<string>()
-  for (const origin of origins) {
-    const url = parseSource(origin, true)
+  const permitidos = new Set<string>()
+  for (const origen of origenes) {
+    const url = leerOrigen(origen, true)
     if (!url) throw new Error('CSRF allowed origins must be complete HTTP(S) origins without paths')
-    allowed.add(url.origin)
+    permitidos.add(url.origin)
   }
-  return allowed
+  return permitidos
 }
 
-function checkOrigin(request: OriginRequest, allowed: ReadonlySet<string>): void {
-  const origin = request.headers.origin
+function comprobarOrigen(solicitud: SolicitudConCabeceras, permitidos: ReadonlySet<string>): void {
+  const origen = solicitud.headers.origin
   // Un Origin presente pero inválido no puede salvarse con un Referer permitido.
-  const source = origin === undefined
-    ? parseSource(request.headers.referer, false)
-    : parseSource(origin, true)
-  if (!source || !allowed.has(source.origin)) throw forbidden()
+  const urlRecibida = origen === undefined
+    ? leerOrigen(solicitud.headers.referer, false)
+    : leerOrigen(origen, true)
+  if (!urlRecibida || !permitidos.has(urlRecibida.origin)) throw errorCsrf()
 }
 
 /** Compara protocolo, host y puerto completos. No confía en Host ni en X-Forwarded-Host. */
-export function validateRequestOrigin(request: OriginRequest, allowedOrigins: readonly string[]): void {
-  checkOrigin(request, configuredOrigins(allowedOrigins))
+export function validateRequestOrigin(solicitud: SolicitudConCabeceras, allowedOrigins: readonly string[]): void {
+  comprobarOrigen(solicitud, prepararOrigenes(allowedOrigins))
 }
 
-/** Sin registrar: GET/HEAD/OPTIONS no deben modificar datos del dominio. CSRF no reemplaza la autorización. */
-export function createCsrfProtection(options: { allowedOrigins: readonly string[] }): RequestHandler {
-  const allowed = configuredOrigins(options.allowedOrigins)
-  return (request, _response, next) => {
-    if (SAFE_METHODS.has(request.method)) return next()
+/** Protege las escrituras; GET, HEAD y OPTIONS no deben modificar datos. */
+export function createCsrfProtection(opciones: { allowedOrigins: readonly string[] }): RequestHandler {
+  const permitidos = prepararOrigenes(opciones.allowedOrigins)
+  return (solicitud, _response, next) => {
+    if (METODOS_SEGUROS.has(solicitud.method)) return next()
     try {
-      checkOrigin(request, allowed)
-      validateCsrfToken(request, request.headers[CSRF_HEADER_NAME])
+      comprobarOrigen(solicitud, permitidos)
+      validateCsrfToken(solicitud, solicitud.headers[CSRF_HEADER_NAME])
       next()
     } catch (error) {
       next(error)

@@ -3,6 +3,8 @@ import { ServiceError, requirePositiveInteger, requireRecord, requireString } fr
 import { hashPassword } from '../shared/security/password.js'
 import { requirePassword } from '../shared/security/password-validation.js'
 import { Cliente } from './cliente.entity.js'
+import { Pedido } from '../pedido/pedido.entity.js'
+import { FlushMode, ForeignKeyConstraintViolationException, IsolationLevel, LockMode } from '@mikro-orm/core'
 
 const em = orm.em
 
@@ -90,7 +92,26 @@ export async function updateCliente(id: number, value: unknown) {
 }
 
 export async function deleteCliente(id: number) {
-  const cliente = await findCliente(id)
-  em.remove(cliente)
-  await em.flush()
+  try {
+    await em.transactional(async tx => {
+      // El bloqueo de la cuenta se mantiene hasta el commit. La FK de Pedido
+      // impide insertar un pedido para ese cliente mientras se completa el borrado.
+      const cliente = await tx.findOne(Cliente, { id }, {
+        lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true, populate: false,
+        flushMode: FlushMode.COMMIT,
+      })
+      if (!cliente) throw new ServiceError('Cliente not found', 404)
+      if (await tx.count(Pedido, { cliente: id }, { flushMode: FlushMode.COMMIT }) > 0) {
+        throw new ServiceError('No podés eliminar tu cuenta porque tiene pedidos registrados', 409)
+      }
+      tx.remove(cliente)
+      await tx.flush()
+    }, { clear: true, flushMode: FlushMode.COMMIT, isolationLevel: IsolationLevel.READ_COMMITTED })
+  } catch (error) {
+    // Una restricción referencial también se traduce a un conflicto de negocio.
+    if (error instanceof ForeignKeyConstraintViolationException) {
+      throw new ServiceError('No podés eliminar tu cuenta porque tiene registros asociados', 409)
+    }
+    throw error
+  }
 }

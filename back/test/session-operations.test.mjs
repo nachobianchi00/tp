@@ -24,6 +24,9 @@ let createSession, getSessionIdentity, destroySession, createSessionMiddleware, 
 let entities, storedHash, accounts, lookups, lookupFailure
 
 const em = {
+  async count(Entity, criteria) {
+    return accounts.filter(account => account instanceof Entity && account.id === criteria.id).length
+  },
   async findOne(entity, criteria) {
     lookups.push({ entity, criteria })
     if (lookupFailure) throw lookupFailure

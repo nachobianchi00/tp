@@ -25,6 +25,11 @@ let record, assignments, flushes, queries, serviceCalls
 
 // El doble asignaría cualquier clave; la defensa debe ejecutarse en el servicio real.
 const em = {
+  // Las sesiones de estas pruebas pertenecen a cuentas ficticias de ID 7.
+  async count(Entity, criteria) {
+    assert.ok(['Cliente', 'Admin'].includes(Entity.name))
+    return criteria.id === 7 ? 1 : 0
+  },
   async findOne(Entity, criteria, options) {
     assert.equal(Entity, Pago)
     queries.push({ criteria: { ...criteria }, options })

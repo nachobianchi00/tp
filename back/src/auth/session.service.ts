@@ -4,27 +4,30 @@ import type { AuthIdentity } from './auth.service.js'
 import { ServiceError } from '../shared/service-errors.js'
 import { SESSION_TTL_MS } from '../shared/security/session.js'
 import type {} from '../shared/security/session.types.js'
+import { orm } from '../shared/db/orm.js'
+import { Cliente } from '../cliente/cliente.entity.js'
+import { Admin } from '../admin/admin.entity.js'
 
-type SessionRequest = Pick<Request, 'session'>
-type RequestSession = Request['session']
-type SessionOperation = 'regenerate' | 'save' | 'destroy'
+type SolicitudConSesion = Pick<Request, 'session'>
+type SesionDeSolicitud = Request['session']
+type OperacionDeSesion = 'regenerate' | 'save' | 'destroy'
 
 // express-session usa callbacks. La promesa permite esperar y capturar también errores síncronos.
-function runOperation(session: RequestSession, operation: SessionOperation): Promise<void> {
+function ejecutarOperacion(sesion: SesionDeSolicitud, operacion: OperacionDeSesion): Promise<void> {
   return new Promise((resolve, reject) => {
-    session[operation](error => error ? reject(error) : resolve())
+    sesion[operacion](error => error ? reject(error) : resolve())
   })
 }
 
-function removeIdentity(session: RequestSession): void {
-  delete session.identity
-  delete session.authenticatedAt
+function quitarIdentidad(sesion: SesionDeSolicitud): void {
+  delete sesion.identity
+  delete sesion.authenticatedAt
 }
 
-async function discardFailedSession(request: SessionRequest): Promise<void> {
-  if (!request.session) return
+async function descartarSesionFallida(solicitud: SolicitudConSesion): Promise<void> {
+  if (!solicitud.session) return
   try {
-    await destroySession(request)
+    await destroySession(solicitud)
   } catch {
     // Se conserva el error principal; nunca se informa que el login fue exitoso.
     // Si el almacén falla, no podemos garantizar la eliminación de su registro.
@@ -32,68 +35,82 @@ async function discardFailedSession(request: SessionRequest): Promise<void> {
 }
 
 /** Verifica credenciales antes de regenerar el ID y guardar únicamente una identidad segura. */
-export async function createSession(request: SessionRequest, credentials: unknown): Promise<AuthIdentity> {
-  if (!request.session) {
+export async function createSession(solicitud: SolicitudConSesion, credenciales: unknown): Promise<AuthIdentity> {
+  if (!solicitud.session) {
     throw new ServiceError('No se pudo iniciar la sesión', 500)
   }
 
   // Un intento con credenciales incorrectas no modifica una sesión existente.
-  const identity = await verifyCredentials(credentials)
-  const previousSession = request.session
+  const identidad = await verifyCredentials(credenciales)
+  const sesionAnterior = solicitud.session
   try {
-    await runOperation(previousSession, 'regenerate')
+    await ejecutarOperacion(sesionAnterior, 'regenerate')
   } catch {
     // El almacén puede haber creado una nueva sesión incluso al devolver un error.
-    removeIdentity(previousSession)
-    await discardFailedSession(request)
+    quitarIdentidad(sesionAnterior)
+    await descartarSesionFallida(solicitud)
     throw new ServiceError('No se pudo iniciar la sesión', 500)
   }
 
   try {
-    request.session.identity = { id: identity.id, tipo: identity.tipo }
+    solicitud.session.identity = { id: identidad.id, tipo: identidad.tipo }
     // Se fija después de verificar credenciales y regenerar; las consultas no lo renuevan.
-    request.session.authenticatedAt = Date.now()
-    request.session.cookie.maxAge = SESSION_TTL_MS
-    await runOperation(request.session, 'save')
+    solicitud.session.authenticatedAt = Date.now()
+    solicitud.session.cookie.maxAge = SESSION_TTL_MS
+    await ejecutarOperacion(solicitud.session, 'save')
   } catch {
-    await discardFailedSession(request)
+    await descartarSesionFallida(solicitud)
     throw new ServiceError('No se pudo guardar la sesión', 500)
   }
 
   // Copia independiente: modificar el resultado no modifica la identidad almacenada.
-  return { id: identity.id, tipo: identity.tipo }
+  return { id: identidad.id, tipo: identidad.tipo }
 }
 
 /** Devuelve null sin autenticación; una sesión vencida o inconsistente se elimina. */
-export async function getSessionIdentity(request: SessionRequest): Promise<AuthIdentity | null> {
-  const current = request.session
-  if (!current) return null
-  const { identity, authenticatedAt } = current
-  if (identity === undefined && authenticatedAt === undefined) return null
+export async function getSessionIdentity(solicitud: SolicitudConSesion): Promise<AuthIdentity | null> {
+  const sesionActual = solicitud.session
+  if (!sesionActual) return null
+  const { identity: identidad, authenticatedAt: inicioAutenticacion } = sesionActual
+  if (identidad === undefined && inicioAutenticacion === undefined) return null
 
-  const now = Date.now()
-  const validIdentity = identity !== null && typeof identity === 'object'
-    && Number.isSafeInteger(identity.id) && identity.id > 0
-    && (identity.tipo === 'cliente' || identity.tipo === 'admin')
-  const validStart = typeof authenticatedAt === 'number' && Number.isSafeInteger(authenticatedAt)
-    && authenticatedAt > 0 && authenticatedAt <= now
+  const ahora = Date.now()
+  const identidadValida = identidad !== null && typeof identidad === 'object'
+    && Number.isSafeInteger(identidad.id) && identidad.id > 0
+    && (identidad.tipo === 'cliente' || identidad.tipo === 'admin')
+  const inicioValido = typeof inicioAutenticacion === 'number' && Number.isSafeInteger(inicioAutenticacion)
+    && inicioAutenticacion > 0 && inicioAutenticacion <= ahora
 
-  if (!validIdentity || !validStart || now - authenticatedAt >= SESSION_TTL_MS) {
-    await destroySession(request)
+  if (!identidadValida || !inicioValido || ahora - inicioAutenticacion >= SESSION_TTL_MS) {
+    await destroySession(solicitud)
     return null
   }
 
-  // No se consulta MySQL ni se devuelve el objeto completo de la sesión.
-  return { id: identity.id, tipo: identity.tipo }
+  let cuentaExiste: boolean
+  try {
+    // count consulta el almacenamiento: no reutiliza una entidad de la identity map.
+    cuentaExiste = (identidad.tipo === 'cliente'
+      ? await orm.em.count(Cliente, { id: identidad.id })
+      : await orm.em.count(Admin, { id: identidad.id })) > 0
+  } catch {
+    // Sin una comprobación vigente no se concede acceso ni se supone un logout exitoso.
+    throw new ServiceError('No se pudo verificar la cuenta de la sesión', 500)
+  }
+  if (!cuentaExiste) {
+    await destroySession(solicitud)
+    return null
+  }
+
+  return { id: identidad.id, tipo: identidad.tipo }
 }
 
-/** Elimina el registro del almacén; borrar la cookie será responsabilidad del futuro controlador. */
-export async function destroySession(request: SessionRequest): Promise<void> {
-  const current = request.session
-  if (!current) return
-  removeIdentity(current)
+/** Elimina la sesión del almacén; el controlador se encarga de borrar la cookie. */
+export async function destroySession(solicitud: SolicitudConSesion): Promise<void> {
+  const sesionActual = solicitud.session
+  if (!sesionActual) return
+  quitarIdentidad(sesionActual)
   try {
-    await runOperation(current, 'destroy')
+    await ejecutarOperacion(sesionActual, 'destroy')
   } catch {
     throw new ServiceError('No se pudo cerrar la sesión', 500)
   }

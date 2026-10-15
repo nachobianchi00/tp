@@ -49,6 +49,9 @@ function collections() {
 }
 // Se ejecutan los servicios reales, con transacciones y entidades simuladas exclusivamente en memoria.
 const em={
+  async count(Entity, criteria) {
+    return records.filter(record => record instanceof Entity && record.id === criteria.id).length
+  },
   async find(Entity,criteria,options) {
     queries.push({operation:'find',Entity,criteria,options})
     return storedEntities(Entity).filter(record=>matches(record,Entity,criteria))

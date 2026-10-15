@@ -33,6 +33,9 @@ function matches(record, Entity, criteria) {
 }
 // Almacenamiento simulado de cuentas y catálogo; metadataOrm solo prepara la serialización real.
 const em = {
+  async count(Entity, criteria) {
+    return records.filter(record => record instanceof Entity && record.id === criteria.id).length
+  },
   async find(Entity, criteria) {
     queries.push({ operation: 'find', Entity, criteria })
     return records.filter(record => matches(record, Entity, criteria))
