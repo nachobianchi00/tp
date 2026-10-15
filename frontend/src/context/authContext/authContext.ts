@@ -8,6 +8,7 @@ export interface AuthContextType {
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => Promise<boolean>;
+  deleteOwnAccount: () => Promise<boolean>;
   refreshSession: () => Promise<void>;
 }
 

@@ -5,61 +5,69 @@ import type { AccountType } from '../../type/authType';
 import styles from './login.module.css';
 
 export default function Login({ tipo }: { tipo: AccountType }) {
-  const { identity, checking, submitting, error, login, logout, refreshSession } = useAuth();
-  const [mail, setMail] = useState('');
-  const [password, setPassword] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const disabled = checking || submitting;
+  const {
+    identity: identidad,
+    checking: comprobandoSesion,
+    submitting: enviando,
+    error,
+    login: iniciarSesion,
+    logout: cerrarSesion,
+    refreshSession: actualizarSesion,
+  } = useAuth();
+  const [correo, establecerCorreo] = useState('');
+  const [contrasena, establecerContrasena] = useState('');
+  const [errorDeValidacion, establecerErrorDeValidacion] = useState<string | null>(null);
+  const deshabilitado = comprobandoSesion || enviando;
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (disabled) return;
-    if (!mail.trim() || !password.trim()) {
-      setValidationError('Completá el correo y la contraseña.');
+  async function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    if (deshabilitado) return;
+    if (!correo.trim() || !contrasena.trim()) {
+      establecerErrorDeValidacion('Completá el correo y la contraseña.');
       return;
     }
-    setValidationError(null);
+    establecerErrorDeValidacion(null);
     try {
       // Se envía la contraseña original, incluidos sus espacios.
-      await login({ mail, password, tipo });
+      await iniciarSesion({ mail: correo, password: contrasena, tipo });
     } finally {
-      setPassword('');
+      establecerContrasena('');
     }
   }
 
   return (
-    <section className={styles.container} aria-labelledby="login-title" aria-busy={disabled}>
+    <section className={styles.container} aria-labelledby="login-title" aria-busy={deshabilitado}>
       <h1 id="login-title">Iniciar sesión</h1>
-      {checking && <p role="status">Comprobando sesión…</p>}
-      {(validationError || error) && <p className={styles.error} role="alert">{validationError || error}</p>}
+      {comprobandoSesion && <p role="status">Comprobando sesión…</p>}
+      {(errorDeValidacion || error) && <p className={styles.error} role="alert">{errorDeValidacion || error}</p>}
 
-      {identity ? (
+      {identidad ? (
         <div className={styles.session}>
-          <p>Cuenta: <strong>{identity.tipo === 'admin' ? 'Administrador' : 'Cliente'}</strong></p>
-          <p>ID: {identity.id}</p>
-          <button className={styles.button} type="button" disabled={disabled} onClick={() => void logout()}>
-            {submitting ? 'Cerrando sesión…' : 'Cerrar sesión'}
+          <p>Cuenta: <strong>{identidad.tipo === 'admin' ? 'Administrador' : 'Cliente'}</strong></p>
+          <p>ID: {identidad.id}</p>
+          <button className={styles.button} type="button" disabled={deshabilitado} onClick={() => void cerrarSesion()}>
+            {enviando ? 'Cerrando sesión…' : 'Cerrar sesión'}
           </button>
         </div>
       ) : (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <fieldset className={styles.fields} disabled={disabled}>
+        <form className={styles.form} onSubmit={enviarFormulario}>
+          <fieldset className={styles.fields} disabled={deshabilitado}>
             <label htmlFor="login-mail">Correo electrónico</label>
             <input id="login-mail" name="mail" type="email" autoComplete="username" required
-              value={mail} onChange={event => setMail(event.target.value)} />
+              value={correo} onChange={evento => establecerCorreo(evento.target.value)} />
 
             <label htmlFor="login-password">Contraseña</label>
             <input id="login-password" name="password" type="password" autoComplete="current-password" required
-              value={password} onChange={event => setPassword(event.target.value)} />
+              value={contrasena} onChange={evento => establecerContrasena(evento.target.value)} />
 
             <button className={styles.button} type="submit">
-              {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
+              {enviando ? 'Iniciando sesión…' : 'Iniciar sesión'}
             </button>
           </fieldset>
         </form>
       )}
       {error && (
-        <button className={styles.retry} type="button" disabled={disabled} onClick={() => void refreshSession()}>
+        <button className={styles.retry} type="button" disabled={deshabilitado} onClick={() => void actualizarSesion()}>
           Volver a comprobar sesión
         </button>
       )}
