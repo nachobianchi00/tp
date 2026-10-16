@@ -17,8 +17,7 @@ export class Admin extends BaseEntity {
   @Property({ unique: true })
   mail!: string
 
-  @Property({ nullable: false })
+  @Property({ nullable: false, hidden: true })
   password!: string
 
 }
-

@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { optionalBoolean, optionalString, requireNonNegativeAmount, requireRecord, requireString, ServiceError } from '../shared/service-errors.js'
+import { optionalBoolean, optionalString, requireNonNegativeAmount, requireRecord, requireString, AppError } from '../shared/service-errors.js'
 import { MetodoEnvio } from './metodoEnvio.entity.js'
 
 const em = orm.em
@@ -10,7 +10,7 @@ export async function findAllMetodosEnvio() {
 
 export async function findMetodoEnvio(id: number) {
   const metodoEnvio = await em.findOne(MetodoEnvio, { id })
-  if (!metodoEnvio) throw new ServiceError('Metodo de envio not found', 404)
+  if (!metodoEnvio) throw new AppError('Metodo de envio not found', 404)
   return metodoEnvio
 }
 
@@ -18,7 +18,7 @@ export async function createMetodoEnvio(value: unknown) {
   const body = requireRecord(value)
   const costo = requireNonNegativeAmount(body.costo, 'costo')
   if (costo > 99_999_999.99) {
-    throw new ServiceError('costo exceeds the supported amount', 400)
+    throw new AppError('costo exceeds the supported amount', 400)
   }
   const metodoEnvio = em.create(MetodoEnvio, {
     descripcion: requireString(body.descripcion, 'descripcion'),

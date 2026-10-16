@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { isRecord, ServiceError, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js'
+import { isRecord, AppError, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js'
 import { Categoria } from './categoria.entity.js'
 
 const em = orm.em
@@ -10,7 +10,7 @@ export async function findAllCategorias() {
 
 export async function findCategoria(id: number) {
   const categoria = await em.findOne(Categoria, { id }, { populate: ['subcategorias', 'productos'] })
-  if (!categoria) throw new ServiceError('Categoria not found', 404)
+  if (!categoria) throw new AppError('Categoria not found', 404)
   return categoria
 }
 
@@ -25,14 +25,14 @@ export async function createCategoria(value: unknown) {
     : requirePositiveInteger(categoriaPadreValue, 'categoriaPadre')
 
   if (await em.findOne(Categoria, { nombre })) {
-    throw new ServiceError('A category with this name already exists', 409)
+    throw new AppError('A category with this name already exists', 409)
   }
 
   const categoriaPadre = padreId === undefined
     ? undefined
     : await em.findOne(Categoria, { id: padreId })
   if (padreId !== undefined && !categoriaPadre) {
-    throw new ServiceError('Parent category not found', 404)
+    throw new AppError('Parent category not found', 404)
   }
 
   const categoria = em.create(Categoria, { nombre, categoriaPadre })

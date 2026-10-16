@@ -1,6 +1,6 @@
 import { EntityManager, LockMode } from '@mikro-orm/core'
 import { orm } from '../shared/db/orm.js'
-import { ServiceError, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
+import { AppError, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
 import { Producto } from '../producto/producto.entity.js'
 import { DetallePedido } from './detallePedido.entity.js'
 import { EstadoPedido, Pedido } from './pedido.entity.js'
@@ -10,7 +10,7 @@ const em = orm.em
 function cents(value: unknown) {
   const amount = Number(value)
   if (!Number.isFinite(amount) || amount < 0) {
-    throw new ServiceError('Order or product price is invalid', 409)
+    throw new AppError('Order or product price is invalid', 409)
   }
   return Math.round(amount * 100)
 }
@@ -32,7 +32,7 @@ async function recalculatePedidoTotal(
     costoEnvio,
   )
   if (!Number.isSafeInteger(totalEnCentavos) || totalEnCentavos > 9_999_999_999) {
-    throw new ServiceError('Pedido total exceeds the supported amount', 409)
+    throw new AppError('Pedido total exceeds the supported amount', 409)
   }
   pedido.total = totalEnCentavos / 100
 }
@@ -43,7 +43,7 @@ export async function findAllDetallesPedido() {
 
 export async function findDetallePedido(id: number) {
   const detalle = await em.findOne(DetallePedido, { id }, { populate: ['pedido', 'producto'] })
-  if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
+  if (!detalle) throw new AppError('Detalle de pedido not found', 404)
   return detalle
 }
 
@@ -62,17 +62,17 @@ export async function createDetallePedido(value: unknown) {
       ),
       transactionalEm.findOne(Producto, { id: productoId }),
     ])
-    if (!pedido) throw new ServiceError('Pedido not found', 404)
-    if (!producto) throw new ServiceError('Producto not found', 404)
+    if (!pedido) throw new AppError('Pedido not found', 404)
+    if (!producto) throw new AppError('Producto not found', 404)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
-      throw new ServiceError('Only pending orders can be modified', 409)
+      throw new AppError('Only pending orders can be modified', 409)
     }
-    if (!producto.estado) throw new ServiceError('Producto is inactive', 409)
+    if (!producto.estado) throw new AppError('Producto is inactive', 409)
 
     const existing = await transactionalEm.find(DetallePedido, { pedido, producto })
     const cantidadSolicitada = existing.reduce((sum, detalle) => sum + detalle.cantidad, cantidad)
     if (!Number.isSafeInteger(cantidadSolicitada) || cantidadSolicitada > producto.cantidad) {
-      throw new ServiceError(`Insufficient stock for producto ${productoId}`, 409)
+      throw new AppError(`Insufficient stock for producto ${productoId}`, 409)
     }
 
     const precioEnCentavos = cents(producto.precio)
@@ -91,7 +91,7 @@ export async function createDetallePedido(value: unknown) {
 export async function updateDetallePedido(id: number, value: unknown) {
   const body = requireRecord(value)
   if (Object.keys(body).some(field => field !== 'cantidad')) {
-    throw new ServiceError('Only cantidad can be changed on a order detail', 400)
+    throw new AppError('Only cantidad can be changed on a order detail', 400)
   }
   const cantidad = requirePositiveInteger(body.cantidad, 'cantidad')
 
@@ -101,15 +101,15 @@ export async function updateDetallePedido(id: number, value: unknown) {
       { id },
       { populate: ['pedido', 'producto', 'pedido.metodoEnvio'] },
     )
-    if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
+    if (!detalle) throw new AppError('Detalle de pedido not found', 404)
     const pedido = await transactionalEm.findOne(
       Pedido,
       { id: detalle.pedido.id },
       { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE },
     )
-    if (!pedido) throw new ServiceError('Pedido not found', 404)
+    if (!pedido) throw new AppError('Pedido not found', 404)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
-      throw new ServiceError('Only pending orders can be modified', 409)
+      throw new AppError('Only pending orders can be modified', 409)
     }
     const otherDetails = await transactionalEm.find(DetallePedido, {
       pedido,
@@ -118,7 +118,7 @@ export async function updateDetallePedido(id: number, value: unknown) {
     })
     const requestedQuantity = otherDetails.reduce((sum, other) => sum + other.cantidad, cantidad)
     if (!Number.isSafeInteger(requestedQuantity) || requestedQuantity > detalle.producto.cantidad) {
-      throw new ServiceError(`Insufficient stock for producto ${detalle.producto.id}`, 409)
+      throw new AppError(`Insufficient stock for producto ${detalle.producto.id}`, 409)
     }
     detalle.cantidad = cantidad
     await recalculatePedidoTotal(transactionalEm, pedido, [detalle], detalle.id)
@@ -134,15 +134,15 @@ export async function deleteDetallePedido(id: number) {
       { id },
       { populate: ['pedido', 'pedido.metodoEnvio'] },
     )
-    if (!detalle) throw new ServiceError('Detalle de pedido not found', 404)
+    if (!detalle) throw new AppError('Detalle de pedido not found', 404)
     const pedido = await transactionalEm.findOne(
       Pedido,
       { id: detalle.pedido.id },
       { populate: ['metodoEnvio'], lockMode: LockMode.PESSIMISTIC_WRITE },
     )
-    if (!pedido) throw new ServiceError('Pedido not found', 404)
+    if (!pedido) throw new AppError('Pedido not found', 404)
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
-      throw new ServiceError('Only pending orders can be modified', 409)
+      throw new AppError('Only pending orders can be modified', 409)
     }
     transactionalEm.remove(detalle)
     await recalculatePedidoTotal(transactionalEm, pedido, [], detalle.id)

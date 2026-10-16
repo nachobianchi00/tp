@@ -13,6 +13,7 @@ import { metodoEnvioRouter } from './pedido/metodoEnvio.routes.js'
 import { pagoRouter } from './pedido/pago.routes.js'
 import session from 'express-session'
 import { authRouter } from './auth/auth.routes.js'
+import { globalErrorHandler } from './shared/error.middleware.js'
 
 const sessionSecret = process.env.SESSION_SECRET
 if (!sessionSecret) {
@@ -54,6 +55,8 @@ app.use('/api/auth', authRouter)
 app.use((_, res) => {
     return res.status(404).json({ message: 'resource not found' })
 })
+
+app.use(globalErrorHandler)
 
 await syncSchema()//never in production
 

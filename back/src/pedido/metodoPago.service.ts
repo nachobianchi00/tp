@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { optionalBoolean, requireRecord, requireString, ServiceError } from '../shared/service-errors.js'
+import { optionalBoolean, requireRecord, requireString, AppError } from '../shared/service-errors.js'
 import { MetodoPago } from './metodoPago.entity.js'
 
 const em = orm.em
@@ -10,7 +10,7 @@ export async function findAllMetodosPago() {
 
 export async function findMetodoPago(id: number) {
   const metodoPago = await em.findOne(MetodoPago, { id })
-  if (!metodoPago) throw new ServiceError('Metodo de pago not found', 404)
+  if (!metodoPago) throw new AppError('Metodo de pago not found', 404)
   return metodoPago
 }
 
