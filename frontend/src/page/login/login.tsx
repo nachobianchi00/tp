@@ -1,67 +1,55 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/authContext/useAuth';
 import type { AccountType } from '../../type/authType';
 import styles from './login.module.css';
 
 export default function Login({ tipo }: { tipo: AccountType }) {
-  const { identity, checking, submitting, error, login, logout, refreshSession } = useAuth();
+  const { identity, checking, submitting, error, login } = useAuth();
+  const location = useLocation();
   const [mail, setMail] = useState('');
   const [password, setPassword] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
   const disabled = checking || submitting;
+
+  // Si venía redirigido (por ejemplo desde /checkout), vuelve ahí; si no, al inicio.
+  const from = location.state?.from?.pathname ?? '/';
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (disabled) return;
-    if (!mail.trim() || !password.trim()) {
-      setValidationError('Completá el correo y la contraseña.');
-      return;
-    }
-    setValidationError(null);
-    try {
-      // Se envía la contraseña original, incluidos sus espacios.
-      await login({ mail, password, tipo });
-    } finally {
-      setPassword('');
-    }
+    await login({ mail: mail.trim().toLowerCase(), password, tipo });
+    setPassword('');
   }
 
+  // Con sesión iniciada no tiene sentido ver el login (también corre justo después de loguearse).
+  if (identity) return <Navigate to={from} replace />;
+
   return (
-    <section className={styles.container} aria-labelledby="login-title" aria-busy={disabled}>
-      <h1 id="login-title">Iniciar sesión</h1>
-      {checking && <p role="status">Comprobando sesión…</p>}
-      {(validationError || error) && <p className={styles.error} role="alert">{validationError || error}</p>}
+    <section className={styles.container}>
+      <h1>Iniciar sesión</h1>
+      {location.state?.from && <p>Iniciá sesión para continuar.</p>}
+      {error && <p className={styles.error} role="alert">{error}</p>}
 
-      {identity ? (
-        <div className={styles.session}>
-          <p>Cuenta: <strong>{identity.tipo === 'admin' ? 'Administrador' : 'Cliente'}</strong></p>
-          <p>ID: {identity.id}</p>
-          <button className={styles.button} type="button" disabled={disabled} onClick={() => void logout()}>
-            {submitting ? 'Cerrando sesión…' : 'Cerrar sesión'}
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <fieldset className={styles.fields} disabled={disabled}>
+          <label htmlFor="login-mail">Correo electrónico</label>
+          <input id="login-mail" type="email" autoComplete="username" required
+            value={mail} onChange={event => setMail(event.target.value)} />
+
+          <label htmlFor="login-password">Contraseña</label>
+          <input id="login-password" type="password" autoComplete="current-password" required
+            value={password} onChange={event => setPassword(event.target.value)} />
+
+          <button className={styles.button} type="submit">
+            {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>
-        </div>
-      ) : (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <fieldset className={styles.fields} disabled={disabled}>
-            <label htmlFor="login-mail">Correo electrónico</label>
-            <input id="login-mail" name="mail" type="email" autoComplete="username" required
-              value={mail} onChange={event => setMail(event.target.value)} />
+        </fieldset>
+      </form>
 
-            <label htmlFor="login-password">Contraseña</label>
-            <input id="login-password" name="password" type="password" autoComplete="current-password" required
-              value={password} onChange={event => setPassword(event.target.value)} />
-
-            <button className={styles.button} type="submit">
-              {submitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
-            </button>
-          </fieldset>
-        </form>
-      )}
-      {error && (
-        <button className={styles.retry} type="button" disabled={disabled} onClick={() => void refreshSession()}>
-          Volver a comprobar sesión
-        </button>
+      {tipo === 'cliente' && (
+        <Link className={styles.link} to="/registro" state={location.state}>
+          ¿No tenés cuenta? Registrate
+        </Link>
       )}
     </section>
   );

@@ -29,7 +29,7 @@ export default function BarTopFooter() {
           <h3 className={styles.columnaTitulo}>Páginas</h3>
           <Link to="/" className={styles.columnaLink}>Inicio</Link>
           <Link to="/categorias" className={styles.columnaLink}>Categorías</Link>
-          <Link to="/contacto" className={styles.columnaLink}>Contacto</Link>
+          {/*<Link to="/contacto" className={styles.columnaLink}>Contacto</Link>*/}
           <Link to="/mi-cuenta" className={styles.columnaLink}>Mi cuenta</Link>
         </div>
       </div>

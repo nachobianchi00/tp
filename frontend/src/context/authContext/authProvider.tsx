@@ -6,9 +6,10 @@ import { authService } from '../../service/auth.service';
 import type { AuthIdentity, LoginCredentials } from '../../type/authType';
 
 function errorMessage(error: unknown): string {
-  if (error instanceof HttpError) return error.message;
-  if (error instanceof TypeError) return 'No se pudo conectar con el servidor.'; // fetch falla por red
-  return 'No se pudo completar la operación.';
+  if (error instanceof HttpError && (error.status === 400 || error.status === 401)) {
+    return 'Correo o contraseña incorrectos.';
+  }
+  return 'Ocurrió un error. Intentá de nuevo.';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -25,8 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialCheck.current ??= authService.me();
     initialCheck.current.then(current => {
       if (active) setIdentity(current);
-    }).catch(cause => {
-      if (active) setError(errorMessage(cause));
+    }).catch(() => {
+      // Sin conexión: se trata como "sin sesión". No se muestra ningún error.
     }).finally(() => {
       if (active) setChecking(false);
     });
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIdentity(await operation());
       return true;
     } catch (cause) {
+      console.error(cause); // el detalle técnico queda en la consola, no en la pantalla
       setError(errorMessage(cause));
       // Solo una lectura: aclara sesiones vencidas o un POST cuya respuesta se perdió.
       // No confundir un fallo de conexión con una confirmación de logout.

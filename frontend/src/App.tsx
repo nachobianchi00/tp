@@ -11,6 +11,10 @@ import Categories from './page/categories/categories';
 import Login from './page/login/login';
 import Register from './page/register/register';
 import { AuthProvider } from './context/authContext/authProvider';
+// import Contact from './page/contact/contact';
+// import AboutUs from './page/aboutUs/aboutUs';
+import ProtectedRoute from './component/protectedRoute/protectedRoute';
+
 
 function App() {
   return (
@@ -20,14 +24,18 @@ function App() {
       <main className={styles.main}>
         <Routes>
           <Route path="/" element={<Home />} />
+          {/* Pendiente: <Route path="/contacto" element={<Contact />} /> */}
+          {/* Pendiente: <Route path="/sobre-nosotros" element={<AboutUs />} /> */}
           <Route path="/producto/:id" element={<ProductDetail />} />
           <Route path="/carrito" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/mi-cuenta" element={<MyAccount />} />
           <Route path="/categorias" element={<Categories />} />
           <Route path="/login" element={<Login key="cliente" tipo="cliente" />} />
           <Route path="/admin/login" element={<Login key="admin" tipo="admin" />} />
           <Route path="/registro" element={<Register />} />
+          <Route element={<ProtectedRoute tipo="cliente" />}>
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/mi-cuenta" element={<MyAccount />} />
+          </Route>
         </Routes>
       </main>
       <Footer />

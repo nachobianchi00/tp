@@ -23,23 +23,23 @@ export default function BarLower() {
         Categorías
       </NavLink>
 
-      <NavLink
+      {/*<NavLink
         to="/contacto"
         className={({ isActive }) =>
           isActive ? `${styles.referenciaLink} ${styles.referenciaActiva}` : styles.referenciaLink
         }
       >
         Contacto
-      </NavLink>
+      </NavLink>*/}
 
-      <NavLink
+      {/*<NavLink
         to="/sobre-nosotros"
         className={({ isActive }) =>
           isActive ? `${styles.referenciaLink} ${styles.referenciaActiva}` : styles.referenciaLink
         }
       >
         Sobre nosotros
-      </NavLink>
+      </NavLink>*/}
 
     </nav>
   );
