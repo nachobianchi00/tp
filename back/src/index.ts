@@ -11,11 +11,26 @@ import { detallePedidoRouter } from './pedido/detallePedido.routes.js'
 import { metodoPagoRouter } from './pedido/metodoPago.routes.js'
 import { metodoEnvioRouter } from './pedido/metodoEnvio.routes.js'
 import { pagoRouter } from './pedido/pago.routes.js'
+import session from 'express-session'
+import { authRouter } from './auth/auth.routes.js'
+
+const sessionSecret = process.env.SESSION_SECRET
+if (!sessionSecret) {
+    throw new Error('SESSION_SECRET must be set')
+}
 
 const app = express()
 
 //middleware
 app.use(express.json())
+
+//middleware
+app.use(session({
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, sameSite: 'lax' },
+}))
 
 //middleware
 app.use((req, res, next) => {
@@ -33,6 +48,7 @@ app.use('/api/detalles-pedido', detallePedidoRouter)
 app.use('/api/metodos-pago', metodoPagoRouter)
 app.use('/api/metodos-envio', metodoEnvioRouter)
 app.use('/api/pagos', pagoRouter)
+app.use('/api/auth', authRouter)
 
 
 app.use((_, res) => {

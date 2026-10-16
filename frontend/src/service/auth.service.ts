@@ -1,40 +1,29 @@
-// src/service/auth.service.ts
-import { http, HttpError } from './http';
-import type { AuthIdentity, LoginCredentials, RegisterClientData } from '../type/authType';
+import { http, HttpError } from './http'
+import type { AuthIdentity, LoginCredentials, RegisterClientData } from '../type/authType'
 
-// Cada escritura (POST) pide un token CSRF nuevo y lo manda en el header.
-const csrfHeader = async () => ({
-  'X-CSRF-Token': (await http<{ csrfToken: string }>('/auth/csrf')).csrfToken,
-});
+type IdentityResponse = { data: AuthIdentity }
 
 export const authService = {
-  async login(credentials: LoginCredentials): Promise<AuthIdentity> {
-    const res = await http<{ data: AuthIdentity }>('/auth/login', {
-      method: 'POST',
-      headers: await csrfHeader(),
-      body: JSON.stringify(credentials),
-    });
-    return res.data;
+  async login(c: LoginCredentials) {
+    const r = await http<IdentityResponse>('/auth/login', { method: 'POST', body: JSON.stringify(c) })
+    return r.data
   },
-
-  async registerCliente(data: RegisterClientData): Promise<void> {
+  async registerCliente(c: RegisterClientData) {
+    const { nombre, apellido, dni, direccion, telefono, mail, password } = c
     await http('/clientes', {
       method: 'POST',
-      headers: await csrfHeader(),
-      body: JSON.stringify(data),
-    });
+      body: JSON.stringify({ nombre, apellido, dni, direccion, telefono, mail, password }),
+    })
   },
-
-  async me(): Promise<AuthIdentity | null> {
+  async me() {
     try {
-      return (await http<{ data: AuthIdentity }>('/auth/me')).data;
+      return (await http<IdentityResponse>('/auth/me')).data
     } catch (e) {
-      if (e instanceof HttpError && e.status === 401) return null; // no hay sesión
-      throw e;
+      if (e instanceof HttpError && e.status === 401) return null
+      throw e
     }
   },
-
-  async logout(): Promise<void> {
-    await http('/auth/logout', { method: 'POST', headers: await csrfHeader() });
+  async logout() {
+    await http('/auth/logout', { method: 'POST' })
   },
-};
+}
