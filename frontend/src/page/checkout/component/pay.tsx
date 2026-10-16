@@ -1,7 +1,7 @@
 // src/page/checkout/component/pay.tsx
 import { payMethods } from '../../../mock/payMethods';
 import type { PayData } from '../../../type/payData';
-import type { PayMethodType } from '../../../type/payMethod';
+import type { PayMethod } from '../../../type/payMethod';
 import styles from './pay.module.css';
 
 interface PayProps {
@@ -10,8 +10,8 @@ interface PayProps {
 }
 
 export default function Pay({ payData, onChange }: PayProps) {
-  function handleSelectMethod(method: PayMethodType) {
-    onChange({ payMethod: method });
+  function handleSelectMethod(method: PayMethod) {
+    onChange({ metodoPago: method });
   }
 
   return (
@@ -24,7 +24,7 @@ export default function Pay({ payData, onChange }: PayProps) {
             key={method.id}
             onClick={() => handleSelectMethod(method)}
             className={
-              payData.payMethod?.id === method.id
+              payData.metodoPago?.id === method.id
                 ? `${styles.opcionBoton} ${styles.opcionSeleccionada}`
                 : styles.opcionBoton
             }

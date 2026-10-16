@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/cartContext/useCart';
+import { productImage } from '../../util/productImage';
 import styles from './cart.module.css';
 
 export default function Cart() {
@@ -23,11 +24,11 @@ export default function Cart() {
         <div className={styles.listaProductos}>
           {items.map((item) => (
             <div key={item.product.id} className={styles.itemCard}>
-              <img src={item.product.image} alt={item.product.name} className={styles.itemImagen} />
+              <img src={productImage(item.product.nombre)} alt={item.product.nombre} className={styles.itemImagen} />
 
               <div className={styles.itemInfo}>
-                <p className={styles.itemNombre}>{item.product.name}</p>
-                <p className={styles.itemPrecio}>${item.product.price}</p>
+                <p className={styles.itemNombre}>{item.product.nombre}</p>
+                <p className={styles.itemPrecio}>${item.product.precio}</p>
               </div>
 
               <div className={styles.selectorCantidad}>

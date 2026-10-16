@@ -13,7 +13,7 @@ export default function Checkout() {
   });
 
   const [payData, setPayData] = useState<PayData>({
-    payMethod: null,
+    metodoPago: null,
   });
 
   return (

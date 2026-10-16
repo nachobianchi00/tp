@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import Navegator from './navegator';
+import AccountMenu from './accountMenu';
 import { useCart } from '../../../context/cartContext/useCart';
 import styles from '../header.module.css';
 import logo from '../../../asset/image/logo.webp';
-import userIcon from '../../../asset/image/icons/user.svg';
 import cartIcon from '../../../asset/image/icons/cart.svg';
 
 export default function BarTop() {
@@ -18,10 +18,7 @@ export default function BarTop() {
       <Navegator />
 
       <div className={styles.acciones}>
-        <Link to="/mi-cuenta" className={styles.usuarioLink}>
-          <img src={userIcon} alt="" className={styles.iconUsuario} />
-          <span>Mi cuenta</span>
-        </Link>
+        <AccountMenu />
 
         <Link to="/carrito" className={styles.carritoBoton}>
           <img src={cartIcon} alt="" className={styles.iconCarrito} />

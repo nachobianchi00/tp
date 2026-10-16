@@ -1,0 +1,43 @@
+.grid {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.vacio {
+  flex: 1;
+  color: var(--color-text-light);
+}
+
+.card {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.imagen {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--color-bg-light);
+}
+
+.nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.2rem;
+}
+
+.precio {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.stock {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin: 0.2rem 0 0;
+}

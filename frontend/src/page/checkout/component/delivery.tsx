@@ -2,7 +2,7 @@ import { metodosEnvio } from '../../../mock/metodosEnvio';
 import { clienteMock } from '../../../mock/clients';
 import type { DeliveryData } from '../../../type/deliveryData';
 import type { DeliveryMethod } from '../../../type/deliveryMethod';
-import styles from './entrega.module.css';
+import styles from './delivery.module.css';
 
 interface EntregaProps {
   entregaData: DeliveryData;
@@ -33,14 +33,14 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
                 : styles.opcionBoton
             }
           >
-            {metodo.description}
+            {metodo.descripcion}
           </button>
         ))}
       </div>
 
-      {entregaData.metodoEnvio?.requiresAddress && (
+      {entregaData.metodoEnvio?.requiereDireccion && (
         <>
-          <p className={styles.envioInfo}>{entregaData.metodoEnvio.comment}</p>
+          <p className={styles.envioInfo}>{entregaData.metodoEnvio.observacion}</p>
           <div className={styles.direccionBox}>
             <p className={styles.direccionLabel}>Se enviará a:</p>
             <p className={styles.direccionTexto}>{clienteMock.direccion}</p>
@@ -48,9 +48,9 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
         </>
       )}
 
-      {entregaData.metodoEnvio && !entregaData.metodoEnvio.requiresAddress && (
+      {entregaData.metodoEnvio && !entregaData.metodoEnvio.requiereDireccion && (
         <p className={styles.retiroInfo}>
-          {entregaData.metodoEnvio.comment}
+          {entregaData.metodoEnvio.observacion}
         </p>
       )}
 

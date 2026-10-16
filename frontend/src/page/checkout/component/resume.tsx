@@ -1,11 +1,11 @@
 // src/page/checkout/component/resumen.tsx
 import { useCart } from '../../../context/cartContext/useCart';
-import type { EntregaData } from '../../../type/deliveryData';
+import type { DeliveryData } from '../../../type/deliveryData';
 import type { PayData } from '../../../type/payData';
 import styles from './resume.module.css';
 
 interface ResumenProps {
-  entregaData: EntregaData;
+  entregaData: DeliveryData;
   payData: PayData;
 }
 
@@ -16,7 +16,7 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
   const total = totalPrice + costoEnvio;
 
   const puedeConfirmar =
-    items.length > 0 && entregaData.metodoEnvio !== null && payData.payMethod !== null;
+    items.length > 0 && entregaData.metodoEnvio !== null && payData.metodoPago !== null;
 
   function handleConfirmar() {
     if (!puedeConfirmar) return;
@@ -31,8 +31,8 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
       <div className={styles.listaItems}>
         {items.map((item) => (
           <div key={item.product.id} className={styles.itemFila}>
-            <span>{item.quantity} x {item.product.name}</span>
-            <span>${item.quantity * item.product.price}</span>
+            <span>{item.quantity} x {item.product.nombre}</span>
+            <span>${item.quantity * item.product.precio}</span>
           </div>
         ))}
       </div>
@@ -51,7 +51,7 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
       </div>
 
       <p className={styles.metodoPagoTexto}>
-        Pago: {payData.payMethod?.descripcion ?? 'No seleccionado'}
+        Pago: {payData.metodoPago?.descripcion ?? 'No seleccionado'}
       </p>
 
       <button

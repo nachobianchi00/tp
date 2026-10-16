@@ -1,58 +1,13 @@
-import type { ProductType } from "../type/productType";
+import type { ProductType } from '../type/productType';
+import { categories } from './categories';
+
+const [almacen, panaderia, bebidas, lacteos] = categories;
 
 export const products: ProductType[] = [
-  {
-    id: 1,
-    name: "Mani",
-    price: 1500,
-    stock: 5,
-    image: 'https://placehold.co/300x300?text=mani',
-    category: {id:1 , name: "Almacen"}
-
-  },
- {
-    id: 2,
-    name: "Doritos",
-    price: 3000,
-    stock: 6,
-    image: 'https://placehold.co/300x300?text=doritos',
-    category: {id:1 , name: "Almacen"}
-
-  },
-  {
-    id: 3,
-    name: "Pan",
-    price: 500,
-    stock: 8,
-    image: 'https://placehold.co/300x300?text=pan',
-    category: {id:2 , name: "Panaderia"}
-
-  },
- {
-    id: 4,
-    name: "Fideos",
-    price: 3000,
-    stock: 3,
-    image: 'https://placehold.co/300x300?text=fideos',
-    category: {id:1 , name: "Almacen"}
-
-  },
-  {
-    id: 5,
-    name: "Banana",
-    price: 2000,
-    stock: 4,
-    image: 'https://placehold.co/300x300?text=banana',
-    category: {id:3 , name: "Verdurelia"}
-
-  },
- {
-    id: 6,
-    name: "Manzana",
-    price: 3000,
-    stock: 10,
-    image: 'https://placehold.co/300x300?text=manzana',
-    category: {id:3 , name: "Verdurelia"}
-
-  },
-]
+  { id: 1, nombre: 'Mani', descripcion: 'Maní tostado salado', precio: 1500, cantidad: 5, estado: true, categorias: [almacen] },
+  { id: 2, nombre: 'Doritos', descripcion: 'Snack de maíz sabor queso', precio: 3000, cantidad: 6, estado: true, categorias: [almacen] },
+  { id: 3, nombre: 'Pan', descripcion: 'Pan francés por kilo', precio: 500, cantidad: 8, estado: true, categorias: [panaderia] },
+  { id: 4, nombre: 'Fideos', descripcion: 'Fideos secos 500g', precio: 3000, cantidad: 3, estado: true, categorias: [almacen] },
+  { id: 5, nombre: 'Gaseosa', descripcion: 'Gaseosa cola 1,5L', precio: 2000, cantidad: 4, estado: true, categorias: [bebidas] },
+  { id: 6, nombre: 'Leche', descripcion: 'Leche entera 1L', precio: 1800, cantidad: 10, estado: true, categorias: [lacteos] },
+];

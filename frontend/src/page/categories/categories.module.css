@@ -1,0 +1,22 @@
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumbLink {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}

@@ -188,3 +188,14 @@
 .barraCategorias span:hover {
   opacity: 0.75;
 }
+
+/* Mensaje cuando no hay resultados (no se comporta como opción clickeable) */
+.listaSugerencias .sinResultados {
+  cursor: default;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.listaSugerencias .sinResultados:hover {
+  background: transparent;
+}

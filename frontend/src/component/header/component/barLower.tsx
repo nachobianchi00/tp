@@ -15,12 +15,12 @@ export default function BarLower() {
       </NavLink>
 
       <NavLink
-        to="/productos"
+        to="/categorias"
         className={({ isActive }) =>
           isActive ? `${styles.referenciaLink} ${styles.referenciaActiva}` : styles.referenciaLink
         }
       >
-        Catálogo
+        Categorías
       </NavLink>
 
       <NavLink

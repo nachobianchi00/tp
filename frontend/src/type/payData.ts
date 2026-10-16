@@ -1,5 +1,5 @@
-import type { PayMethodType } from './payMethod';
+import type { PayMethod } from './payMethod';
 
 export interface PayData {
-  payMethod: PayMethodType | null;
+  metodoPago: PayMethod | null;
 }

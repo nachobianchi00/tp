@@ -1,4 +1,4 @@
-export interface PayMethodType {
+export interface PayMethod {
   id: number;
   descripcion: string;
   estado: boolean;

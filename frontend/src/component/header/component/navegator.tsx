@@ -1,26 +1,37 @@
-// src/component/header/component/navegator.tsx
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { products } from '../../../mock/products';
+import { normalize } from '../../../util/normalize';
 import styles from '../header.module.css';
 
 export default function Navegator() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
-  const suggestions = search.trim() === ''
-    ? []
-    : products.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase())
-      );
+  const query = search.trim();
 
+  const suggestions =
+    query === ''
+      ? []
+      : products.filter((p) => normalize(p.nombre).includes(normalize(query)));
+
+  // click en una sugerencia 
   function handleSelect(productId: number) {
     navigate(`/producto/${productId}`);
     setSearch('');
   }
 
+  // Enter 
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (query === '') return;
+    navigate(`/categorias?buscar=${encodeURIComponent(query)}`);
+    setSearch('');
+  }
+
   return (
-    <div className={styles.buscadorWrapper}>
+    <form className={styles.buscadorWrapper} onSubmit={handleSubmit}>
       <svg
         className={styles.iconLupa}
         viewBox="0 0 24 24"
@@ -43,11 +54,19 @@ export default function Navegator() {
         <ul className={styles.listaSugerencias}>
           {suggestions.map((p) => (
             <li key={p.id} onClick={() => handleSelect(p.id)}>
-              {p.name}
+              {p.nombre}
             </li>
           ))}
         </ul>
       )}
-    </div>
+
+      {query !== '' && suggestions.length === 0 && (
+        <ul className={styles.listaSugerencias}>
+          <li className={styles.sinResultados}>
+            {`No encontramos productos para "${query}"`}
+          </li>
+        </ul>
+      )}
+    </form>
   );
 }

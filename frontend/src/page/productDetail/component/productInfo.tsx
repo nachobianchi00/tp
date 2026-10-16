@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { productImage } from '../../../util/productImage';
 import { useCart } from '../../../context/cartContext/useCart';
 import type { ProductType } from '../../../type/productType';
 import styles from './productInfo.module.css';
@@ -23,7 +24,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   }
 
   function handleIncrease() {
-    setQuantity((prev) => Math.min(product.stock, prev + 1));
+    setQuantity((prev) => Math.min(product.cantidad, prev + 1));
   }
 
   function handleAddToCart() {
@@ -33,15 +34,15 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
   return (
     <section className={styles.container}>
-      <p className={styles.categoria}>{product.category.name}</p>
+      <p className={styles.categoria}>{product.categorias.map((c) => c.nombre).join(", ")}</p>
 
       <div className={styles.contenido}>
-        <img src={product.image} alt={product.name} className={styles.imagen} />
+        <img src={productImage(product.nombre)} alt={product.nombre} className={styles.imagen} />
 
         <div className={styles.info}>
-          <h2 className={styles.nombre}>{product.name}</h2>
-          <p className={styles.precio}>${product.price}</p>
-          <p className={styles.stock}>Stock disponible: {product.stock}</p>
+          <h2 className={styles.nombre}>{product.nombre}</h2>
+          <p className={styles.precio}>${product.precio}</p>
+          <p className={styles.stock}>Stock disponible: {product.cantidad}</p>
 
           <div className={styles.selectorCantidad}>
             <button onClick={handleDecrease} className={styles.botonCantidad}>−</button>

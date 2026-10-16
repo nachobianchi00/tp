@@ -13,7 +13,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: Math.min(product.stock, item.quantity + quantity) }
+            ? { ...item, quantity: Math.min(product.cantidad, item.quantity + quantity) }
             : item
         );
       }
@@ -29,14 +29,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) =>
       prev.map((item) =>
         item.product.id === productId
-          ? { ...item, quantity: Math.max(1, Math.min(item.product.stock, quantity)) }
+          ? { ...item, quantity: Math.max(1, Math.min(item.product.cantidad, quantity)) }
           : item
       )
     );
   }
 
   const totalItems = items.length;
-  const totalPrice = items.reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+  const totalPrice = items.reduce((sum, item) => sum + item.quantity * item.product.precio, 0);
 
   return (
     <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, totalItems, totalPrice }}>

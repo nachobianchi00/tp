@@ -1,8 +1,12 @@
+// src/page/home/home.tsx
+import CategoryCarousel from './component/categoryCarousel';
+import BrandsSection from './component/brandsSection';
+
 export default function Home() {
   return (
-    <div>
-      <h1>Página de inicio</h1>
-      <p>Bienvenido a nuestra tienda en línea.</p>
-    </div>
+    <>
+      <CategoryCarousel />
+      <BrandsSection />
+    </>
   );
 }

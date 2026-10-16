@@ -1,0 +1,87 @@
+.container {
+  position: relative;
+}
+
+.trigger {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  width: 16rem;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-secondary);
+  color: var(--color-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-wrap: anywhere;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.option {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--color-bg-light);
+}
+
+.option:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.trigger:focus-visible,
+.option:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.identity {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.75rem;
+}
+
+.error {
+  margin: 0;
+  padding: 0.75rem;
+  color: #9f2020;
+}
+
+@media (max-width: 600px) {
+  .panel {
+    position: fixed;
+    top: auto;
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+}
