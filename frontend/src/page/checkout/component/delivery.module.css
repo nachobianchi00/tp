@@ -1,0 +1,97 @@
+/* CONTENEDOR GENERAL */
+.container {
+  max-width: 500px;
+}
+
+.titulo {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+/* BOTONES DE MÉTODO (Envío / Retira) */
+.opciones {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.opcionBoton {
+  flex: 1;
+  padding: 0.9rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.opcionBoton:hover {
+  border-color: var(--color-primary-light);
+}
+
+.opcionSeleccionada {
+  border-color: var(--color-primary);
+  background: var(--color-bg-light);
+  color: var(--color-primary);
+}
+
+/* DIRECCIÓN (si requiere envío) */
+.direccionBox {
+  background: var(--color-bg-light);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.direccionLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin: 0 0 0.2rem;
+}
+
+.direccionTexto {
+  font-weight: 600;
+  margin: 0;
+}
+
+.envioInfo {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+}
+
+/* INFO DE RETIRO (si NO requiere dirección) */
+.retiroInfo {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+}
+
+/*  OBSERVACIÓN (opcional, para ambos métodos) */
+.observacionBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.observacionLabel {
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.observacionInput {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.observacionInput:focus {
+  outline: none;
+  border-color: var(--color-primary-light);
+}

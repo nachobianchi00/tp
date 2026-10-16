@@ -1,0 +1,168 @@
+/* ============================================
+   CONTENEDOR GENERAL
+   ============================================ */
+.container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.titulo {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.vacio {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-light);
+}
+
+.volverLink {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ============================================
+   LAYOUT: lista de productos | detalle de compra
+   ============================================ */
+.contenido {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* --- Columna izquierda: lista de productos --- */
+.listaProductos {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.itemCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.itemImagen {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--color-bg-light);
+  flex-shrink: 0;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemNombre {
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.itemPrecio {
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.selectorCantidad {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 0.3rem 0.5rem;
+}
+
+.botonCantidad {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg-light);
+  cursor: pointer;
+}
+
+.cantidad {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.eliminarBoton {
+  border: none;
+  background: none;
+  color: var(--color-text-light);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+
+/* --- Columna derecha: detalle de compra --- */
+.detalleCompra {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.detalleTitulo {
+  font-size: 1.1rem;
+  margin: 0 0 1rem;
+}
+
+.detalleFila {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.detalleTotal {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.botones {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.botonCancelar {
+  flex: 1;
+  padding: 0.65rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-secondary);
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.botonComprar {
+  flex: 1;
+  padding: 0.65rem;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+}

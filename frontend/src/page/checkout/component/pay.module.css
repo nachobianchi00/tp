@@ -1,0 +1,37 @@
+.container {
+  max-width: 500px;
+}
+
+.titulo {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.opcionBoton {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.9rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.opcionBoton:hover {
+  border-color: var(--color-primary-light);
+}
+
+.opcionSeleccionada {
+  border-color: var(--color-primary);
+  background: var(--color-bg-light);
+  color: var(--color-primary);
+}

@@ -1,0 +1,201 @@
+/* HEADER — contenedor general */
+.header {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* BAR TOP */
+.barraSuperior {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logo {
+  height: 120px;
+  width: auto;
+}
+
+/* NAVEGATOR */
+.buscadorWrapper {
+  position: relative;
+  flex: 1;
+  max-width: 800px;
+  margin: 0 1rem;
+}
+
+.iconLupa {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-light);
+  pointer-events: none;
+}
+
+.buscador {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.buscador:focus {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 2px rgba(41, 182, 246, 0.2);
+}
+
+.listaSugerencias {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.listaSugerencias li {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.listaSugerencias li:hover {
+  background: var(--color-bg-light);
+}
+
+/* Acciones: Mi cuenta + Carrito  */
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  margin-left: 4rem; 
+}
+
+/* MI CUENTA */
+.usuarioLink {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: color 0.15s;
+}
+.usuarioLink:hover {
+  color: var(--color-primary);
+}
+
+.iconUsuario {
+  width: 45px;
+  height: 45px;
+}
+
+/* CARRITO  */
+.carritoBoton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.2rem;
+  background-color: #a2c7ff5b;
+  border-radius: 24px;
+  border: 1.5px solid var(--color-primary);
+  text-decoration: none;
+  position: relative;
+}
+
+.iconCarrito {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.carritoTexto {
+  color: #140547;
+  font-size: 1rem;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 500;
+  white-space: nowrap;
+}
+/* BAR LOWER — links de navegación general  */
+
+.barraReferencias {
+  display: flex;
+  gap: 2rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--color-bg-light);
+}
+
+.referenciaLink {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  text-decoration: none;
+  padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.referenciaLink:hover {
+  color: var(--color-primary);
+}
+
+.referenciaActiva {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/*  BAR CATEGORIES — franja de categorías */
+
+.barraCategorias {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+}
+
+.barraCategorias span {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.barraCategorias span:hover {
+  opacity: 0.75;
+}
+
+/* Mensaje cuando no hay resultados (no se comporta como opción clickeable) */
+.listaSugerencias .sinResultados {
+  cursor: default;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.listaSugerencias .sinResultados:hover {
+  background: transparent;
+}

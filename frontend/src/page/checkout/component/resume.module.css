@@ -1,0 +1,74 @@
+.container {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.titulo {
+  font-size: 1.1rem;
+  margin: 0 0 1rem;
+}
+
+.listaItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.itemFila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.detalleFila {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.detalleTotal {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.metodoPagoTexto {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin: 1rem 0;
+}
+
+.botonConfirmar {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 24px;
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botonConfirmar:disabled {
+  background: var(--color-border);
+  color: var(--color-text-light);
+  cursor: not-allowed;
+}
+
+.avisoIncompleto {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  text-align: center;
+  margin-top: 0.5rem;
+}
