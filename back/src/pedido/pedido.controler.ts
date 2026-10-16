@@ -2,9 +2,9 @@ import { Request, Response } from 'express'
 import { parseRouteId } from '../shared/route-params.js'
 import { sendServiceError } from '../shared/service-errors.js'
 import {
-  createPedido,
   cancelarPedido,
   confirmarPedido,
+  createPedido,
   deletePedido,
   findAllPedidos,
   findPedido,
