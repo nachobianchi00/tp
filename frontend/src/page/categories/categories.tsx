@@ -1,7 +1,6 @@
 // src/page/categories/categories.tsx
 import { Link, useSearchParams } from 'react-router-dom';
-import { categories } from '../../mock/categories';
-import { products } from '../../mock/products';
+import { useCatalog } from '../../context/catalogContext/useCatalog';
 import { normalize } from '../../util/normalize';
 import CategoryFilter from './component/categoryFilter';
 import ProductGrid from './component/productGrid';
@@ -9,12 +8,15 @@ import styles from './categories.module.css';
 
 export default function Categories() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { categories, products, loading } = useCatalog();
+
+  if (loading) return <p>Cargando…</p>;
 
   const selectedId = Number(searchParams.get('categoria')) || null;
   const selectedCategory = categories.find((c) => c.id === selectedId) ?? null;
   const query = searchParams.get('buscar')?.trim() ?? '';
 
-  // filter ya devuelve un array nuevo, así que sort no modifica el mock
+  // filter ya devuelve un array nuevo, así que sort no modifica la lista del contexto
   const visibleProducts = products
     .filter((p) => !selectedCategory || p.categorias.some((c) => c.id === selectedCategory.id))
     .filter((p) => query === '' || normalize(p.nombre).includes(normalize(query)))

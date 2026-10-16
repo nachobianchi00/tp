@@ -1,4 +1,4 @@
-import { metodosEnvio } from '../../../mock/metodosEnvio';
+import { useCatalog } from '../../../context/catalogContext/useCatalog';
 import { clienteMock } from '../../../mock/clients';
 import type { DeliveryData } from '../../../type/deliveryData';
 import type { DeliveryMethod } from '../../../type/deliveryMethod';
@@ -10,6 +10,8 @@ interface EntregaProps {
 }
 
 export default function Entrega({ entregaData, onChange }: EntregaProps) {
+  const { deliveryMethods } = useCatalog();
+
   function handleSelectMetodo(metodo: DeliveryMethod) {
     onChange({ ...entregaData, metodoEnvio: metodo });
   }
@@ -23,7 +25,7 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
       <h2 className={styles.titulo}>Entrega</h2>
 
       <div className={styles.opciones}>
-        {metodosEnvio.map((metodo) => (
+        {deliveryMethods.map((metodo) => (
           <button
             key={metodo.id}
             onClick={() => handleSelectMetodo(metodo)}
@@ -40,7 +42,7 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
 
       {entregaData.metodoEnvio?.requiereDireccion && (
         <>
-          <p className={styles.envioInfo}>{entregaData.metodoEnvio.observacion}</p>
+          <p className={styles.envioInfo}>Tiempo estimado: {entregaData.metodoEnvio.tiempoEstimado}</p>
           <div className={styles.direccionBox}>
             <p className={styles.direccionLabel}>Se enviará a:</p>
             <p className={styles.direccionTexto}>{clienteMock.direccion}</p>
@@ -50,7 +52,7 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
 
       {entregaData.metodoEnvio && !entregaData.metodoEnvio.requiereDireccion && (
         <p className={styles.retiroInfo}>
-          {entregaData.metodoEnvio.observacion}
+          Tiempo estimado: {entregaData.metodoEnvio.tiempoEstimado}
         </p>
       )}
 

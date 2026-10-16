@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { products } from '../../../mock/products';
+import { useCatalog } from '../../../context/catalogContext/useCatalog';
 import { normalize } from '../../../util/normalize';
 import styles from '../header.module.css';
 
 export default function Navegator() {
   const navigate = useNavigate();
+  const { products } = useCatalog();
   const [search, setSearch] = useState('');
 
   const query = search.trim();

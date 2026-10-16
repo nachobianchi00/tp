@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { productImage } from '../../../util/productImage';
-import { products } from '../../../mock/products';
+import { useCatalog } from '../../../context/catalogContext/useCatalog';
 import type { ProductType } from '../../../type/productType';
 import styles from './relatedProduct.module.css';
 
@@ -9,6 +9,8 @@ interface RelatedProductProps {
 }
 
 export default function RelatedProduct({ currentProduct }: RelatedProductProps) {
+  const { products } = useCatalog();
+
   const related = products.filter(
     (p) =>
       p.id !== currentProduct.id &&

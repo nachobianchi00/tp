@@ -1,5 +1,5 @@
 // src/page/checkout/component/pay.tsx
-import { payMethods } from '../../../mock/payMethods';
+import { useCatalog } from '../../../context/catalogContext/useCatalog';
 import type { PayData } from '../../../type/payData';
 import type { PayMethod } from '../../../type/payMethod';
 import styles from './pay.module.css';
@@ -10,6 +10,8 @@ interface PayProps {
 }
 
 export default function Pay({ payData, onChange }: PayProps) {
+  const { payMethods } = useCatalog();
+
   function handleSelectMethod(method: PayMethod) {
     onChange({ metodoPago: method });
   }

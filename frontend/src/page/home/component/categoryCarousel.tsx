@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { categories } from '../../../mock/categories';
+import { useCatalog } from '../../../context/catalogContext/useCatalog';
 import styles from './categoryCarousel.module.css';
 
 export default function CategoryCarousel() {
+  const { categories } = useCatalog();
   const [current, setCurrent] = useState(0);
   const total = categories.length;
 
-  if (total === 0) return null; // sin categorías no hay nada que mostrar
+  if (total === 0) return null; // sin categorías (o todavía cargando) no hay nada que mostrar
 
   // El resto (%) hace que después de la última vuelva a la primera, y al revés.
   const prev = () => setCurrent(index => (index - 1 + total) % total);

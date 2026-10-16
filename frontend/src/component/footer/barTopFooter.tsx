@@ -1,10 +1,12 @@
 // src/component/footer/barTopFooter.tsx
 import { Link } from 'react-router-dom';
-import { categories } from '../../mock/categories';
+import { useCatalog } from '../../context/catalogContext/useCatalog';
 import logo from '../../asset/image/logo.webp';
 import styles from './footer.module.css';
 
 export default function BarTopFooter() {
+  const { categories } = useCatalog();
+
   return (
     <div className={styles.barraSuperior}>
       <Link to="/" className={styles.logoLink}>
