@@ -21,7 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/producto/:id" element={<ProductDetail />} />
-          <Route path="/carrito" element={<Cart />} />
+          <Route path="/carrito" element={<ProtectedRoute permitirInvitados rolesPermitidos={['cliente']}><Cart /></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute rolesPermitidos={['cliente']}><Checkout /></ProtectedRoute>} />
           <Route path="/mi-cuenta" element={<ProtectedRoute rolesPermitidos={['cliente']}><MyAccount /></ProtectedRoute>} />
           <Route path="/login" element={<Login key="cliente" tipo="cliente" />} />

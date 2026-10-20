@@ -6,9 +6,10 @@ import type { AccountType } from '../../type/authType';
 interface PropiedadesProtectedRoute {
   children: ReactNode;
   rolesPermitidos?: AccountType[];
+  permitirInvitados?: boolean;
 }
 
-export default function ProtectedRoute({ children, rolesPermitidos }: PropiedadesProtectedRoute) {
+export default function ProtectedRoute({ children, rolesPermitidos, permitirInvitados = false }: PropiedadesProtectedRoute) {
   const { identity, checking } = useAuth();
 
   if (checking) {
@@ -16,7 +17,7 @@ export default function ProtectedRoute({ children, rolesPermitidos }: Propiedade
   }
 
   if (!identity) {
-    return <Navigate to="/login" replace />;
+    return permitirInvitados ? children : <Navigate to="/login" replace />;
   }
 
   if (rolesPermitidos && !rolesPermitidos.includes(identity.tipo)) {
