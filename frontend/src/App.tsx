@@ -3,6 +3,7 @@ import Header from './component/header/header';
 import Footer from './component/footer/footer';
 import ProductDetail from './page/productDetail/productDetail';
 import Cart from './page/cart/cart';
+import Categories from './page/categories/categories';
 import Checkout from './page/checkout/checkout';
 import MyAccount from './page/myAccount/myAccount';
 import styles from './app.module.css';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/producto/:id" element={<ProductDetail />} />
           <Route path="/carrito" element={<Cart />} />
+          <Route path="/catalogo" element={<Categories />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/mi-cuenta" element={<MyAccount />} />
           <Route path="/login" element={<Login key="cliente" tipo="cliente" />} />
