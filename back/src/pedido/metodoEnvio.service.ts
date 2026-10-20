@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { optionalBoolean, optionalString, requireNonNegativeAmount, requireRecord, requireString, AppError } from '../shared/service-errors.js'
+import { optionalBoolean, optionalString, requireAllowedFields, requireNonNegativeAmount, requireRecord, requireString, AppError } from '../shared/service-errors.js'
 import { MetodoEnvio } from './metodoEnvio.entity.js'
 
 const em = orm.em
@@ -34,7 +34,23 @@ export async function createMetodoEnvio(value: unknown) {
 
 export async function updateMetodoEnvio(id: number, value: unknown) {
   const metodoEnvio = await findMetodoEnvio(id)
-  em.assign(metodoEnvio, requireRecord(value))
+  const body = requireAllowedFields(value, [
+    'descripcion', 'costo', 'requiereDireccion', 'tiempoEstimado', 'estado', 'observacion',
+  ])
+  const updates: Partial<Pick<MetodoEnvio, 'descripcion' | 'costo' | 'requiereDireccion' | 'tiempoEstimado' | 'estado' | 'observacion'>> = {}
+  if ('descripcion' in body) updates.descripcion = requireString(body.descripcion, 'descripcion')
+  if ('costo' in body) {
+    const costo = requireNonNegativeAmount(body.costo, 'costo')
+    if (costo > 99_999_999.99) throw new AppError('costo exceeds the supported amount', 400)
+    updates.costo = costo
+  }
+  if ('requiereDireccion' in body) {
+    updates.requiereDireccion = optionalBoolean(body.requiereDireccion, 'requiereDireccion', true)
+  }
+  if ('tiempoEstimado' in body) updates.tiempoEstimado = optionalString(body.tiempoEstimado, 'tiempoEstimado')
+  if ('estado' in body) updates.estado = optionalBoolean(body.estado, 'estado', true)
+  if ('observacion' in body) updates.observacion = optionalString(body.observacion, 'observacion')
+  em.assign(metodoEnvio, updates)
   await em.flush()
   return metodoEnvio
 }

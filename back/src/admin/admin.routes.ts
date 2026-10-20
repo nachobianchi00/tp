@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import { findAll, findOne, add, update, remove } from './admin.controler.js'
+import { requireAdmin } from '../shared/auth.middleware.js'
 
 export const adminRouter = Router()
+
+adminRouter.use(requireAdmin)
 
 adminRouter.get('/', findAll)
 adminRouter.get('/:id', findOne)

@@ -1,16 +1,32 @@
 // Carga datos de prueba usando la API. Uso (con el back corriendo): node seed.mjs
 const API = 'http://localhost:3000/api'
+let sessionCookie
 
 async function post(path, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Cookie: sessionCookie },
     body: JSON.stringify(body),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(`${path}: ${json.message}`)
   return json.data
 }
+
+const adminMail = process.env.ADMIN_MAIL
+const adminPassword = process.env.ADMIN_PASSWORD
+if (!adminMail || !adminPassword) {
+  throw new Error('ADMIN_MAIL and ADMIN_PASSWORD must be set to load seed data')
+}
+const loginResponse = await fetch(`${API}/auth/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ mail: adminMail, password: adminPassword }),
+})
+const loginData = await loginResponse.json()
+if (!loginResponse.ok) throw new Error(`Admin login failed: ${loginData.message}`)
+sessionCookie = loginResponse.headers.get('set-cookie')?.split(';', 1)[0]
+if (!sessionCookie) throw new Error('Admin login did not return a session cookie')
 
 const existentes = await (await fetch(`${API}/categorias`)).json()
 if (existentes.data.length > 0) {

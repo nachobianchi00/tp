@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import { findAll, findOne, add, update, remove } from './pago.controler.js'
+import { requireAdmin } from '../shared/auth.middleware.js'
 
 export const pagoRouter = Router()
 
+pagoRouter.use(requireAdmin)
 pagoRouter.get('/', findAll)
 pagoRouter.get('/:id', findOne)
 pagoRouter.post('/', add)

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:dev": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node --env-file=.env.local ./dist/index.js\""
+    "start:dev": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node --env-file=.env.local ./dist/index.js\"",
+    "create:initial-admin": "tsc -p ./tsconfig.json && node ./dist/scripts/create-initial-admin.js"
   },
   "keywords": [],
   "author": "",

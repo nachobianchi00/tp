@@ -20,6 +20,18 @@ export function requireRecord(value: unknown): Record<string, unknown> {
   return value
 }
 
+export function requireAllowedFields(
+  value: unknown,
+  allowedFields: readonly string[],
+): Record<string, unknown> {
+  const body = requireRecord(value)
+  const unexpectedField = Object.keys(body).find(field => !allowedFields.includes(field))
+  if (unexpectedField) {
+    throw new AppError(`${unexpectedField} cannot be updated`, 400)
+  }
+  return body
+}
+
 export function requireString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new AppError(`${field} must be a non-empty string`, 400)

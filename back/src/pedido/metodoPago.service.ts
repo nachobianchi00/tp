@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { optionalBoolean, requireRecord, requireString, AppError } from '../shared/service-errors.js'
+import { optionalBoolean, requireAllowedFields, requireRecord, requireString, AppError } from '../shared/service-errors.js'
 import { MetodoPago } from './metodoPago.entity.js'
 
 const em = orm.em
@@ -25,7 +25,11 @@ export async function createMetodoPago(value: unknown) {
 
 export async function updateMetodoPago(id: number, value: unknown) {
   const metodoPago = await findMetodoPago(id)
-  em.assign(metodoPago, requireRecord(value))
+  const body = requireAllowedFields(value, ['descripcion', 'estado'])
+  const updates: Partial<Pick<MetodoPago, 'descripcion' | 'estado'>> = {}
+  if ('descripcion' in body) updates.descripcion = requireString(body.descripcion, 'descripcion')
+  if ('estado' in body) updates.estado = optionalBoolean(body.estado, 'estado', true)
+  em.assign(metodoPago, updates)
   await em.flush()
   return metodoPago
 }

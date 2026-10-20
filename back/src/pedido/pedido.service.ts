@@ -1,6 +1,6 @@
 import { LockMode } from '@mikro-orm/core'
 import { orm } from '../shared/db/orm.js'
-import { AppError, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
+import { AppError, requireAllowedFields, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
 import { Cliente } from '../cliente/cliente.entity.js'
 import { Producto } from '../producto/producto.entity.js'
 import { DetallePedido } from './detallePedido.entity.js'
@@ -56,12 +56,14 @@ function amountInCents(value: unknown, field: string) {
   return cents
 }
 
-export async function findAllPedidos() {
-  return em.find(Pedido, {}, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
+export async function findAllPedidos(clienteId?: number) {
+  const where = clienteId === undefined ? {} : { cliente: clienteId }
+  return em.find(Pedido, where, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
 }
 
-export async function findPedido(id: number) {
-  const pedido = await em.findOne(Pedido, { id }, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
+export async function findPedido(id: number, clienteId?: number) {
+  const where = clienteId === undefined ? { id } : { id, cliente: clienteId }
+  const pedido = await em.findOne(Pedido, where, { populate: ['detallePedido', 'cliente', 'metodoPago', 'metodoEnvio', 'pago'] })
   if (!pedido) throw new AppError('Pedido not found', 404)
   return pedido
 }
@@ -132,12 +134,7 @@ export async function createPedido(value: unknown) {
 }
 
 export async function updatePedido(id: number, value: unknown) {
-  const body = requireRecord(value)
-  const protectedFields = ['total', 'detallePedido', 'estado', 'fechaCreacion', 'pago', 'metodoEnvio']
-  const attemptedProtectedField = protectedFields.find(field => field in body)
-  if (attemptedProtectedField) {
-    throw new AppError(`${attemptedProtectedField} is managed by the order workflow`, 400)
-  }
+  const body = requireAllowedFields(value, ['cliente', 'metodoPago'])
   return em.transactional(async transactionalEm => {
     const pedido = await transactionalEm.findOne(
       Pedido,
@@ -148,7 +145,19 @@ export async function updatePedido(id: number, value: unknown) {
     if (pedido.estado !== EstadoPedido.PENDIENTE) {
       throw new AppError('Only pending orders can be updated', 409)
     }
-    transactionalEm.assign(pedido, body)
+    if ('cliente' in body) {
+      const clienteId = requirePositiveInteger(body.cliente, 'cliente')
+      const cliente = await transactionalEm.findOne(Cliente, { id: clienteId })
+      if (!cliente) throw new AppError('Cliente not found', 404)
+      pedido.cliente = cliente
+    }
+    if ('metodoPago' in body) {
+      const metodoPagoId = requirePositiveInteger(body.metodoPago, 'metodoPago')
+      const metodoPago = await transactionalEm.findOne(MetodoPago, { id: metodoPagoId })
+      if (!metodoPago) throw new AppError('Metodo de pago not found', 404)
+      if (!metodoPago.estado) throw new AppError('Metodo de pago is inactive', 409)
+      pedido.metodoPago = metodoPago
+    }
     await transactionalEm.flush()
     return pedido
   })

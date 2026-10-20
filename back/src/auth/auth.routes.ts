@@ -17,10 +17,13 @@ authRouter.post('/login', async (req, res) => {
   const body = requireRecord(req.body)
   const mail = requireString(body.mail, 'mail').toLowerCase()
   const password = requireString(body.password, 'password')
-  const tipo = body.tipo === 'admin' ? 'admin' : 'cliente'
-  const user = tipo === 'admin'
-    ? await em.findOne(Admin, { mail })
-    : await em.findOne(Cliente, { mail })
+  const [admin, cliente] = await Promise.all([
+    em.findOne(Admin, { mail }),
+    em.findOne(Cliente, { mail }),
+  ])
+  if (admin && cliente) throw new AppError('invalid credentials', 401)
+  const tipo = admin ? 'admin' : 'cliente'
+  const user = admin ?? cliente
   if (!user) throw new AppError('invalid credentials', 401)
   const hasStoredHash = /^\$2[aby]\$\d{2}\$/.test(user.password)
   const validPassword = hasStoredHash
@@ -31,6 +34,9 @@ authRouter.post('/login', async (req, res) => {
     user.password = await hashPassword(password)
     await em.flush()
   }
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate(error => error ? reject(error) : resolve())
+  })
   req.session.userId = user.id
   req.session.tipo = tipo
   res.json({ message: 'logged in', data: { id: user.id, tipo } })

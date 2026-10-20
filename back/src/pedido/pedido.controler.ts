@@ -11,11 +11,21 @@ import {
 } from './pedido.service.js'
 
 async function findAll(_req: Request, res: Response) {
-  res.json({ message: 'found all pedidos', data: await findAllPedidos() })
+  const user = _req.session
+  res.json({
+    message: 'found all pedidos',
+    data: await findAllPedidos(user.tipo === 'admin' ? undefined : user.userId),
+  })
 }
 
 async function findOne(req: Request, res: Response) {
-  res.json({ message: 'found pedido', data: await findPedido(parseRouteId(req.params.id)) })
+  res.json({
+    message: 'found pedido',
+    data: await findPedido(
+      parseRouteId(req.params.id),
+      req.session.tipo === 'admin' ? undefined : req.session.userId,
+    ),
+  })
 }
 
 async function add(req: Request, res: Response) {

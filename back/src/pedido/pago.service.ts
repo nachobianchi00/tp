@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js'
-import { AppError, requireNonNegativeAmount, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js'
+import { AppError, requireAllowedFields, requireNonNegativeAmount, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js'
 import { Pedido } from './pedido.entity.js'
 import { EstadoPago, Pago } from './pago.entity.js'
 
@@ -48,17 +48,35 @@ export async function createPago(value: unknown) {
 
 export async function updatePago(id: number, value: unknown) {
   const pago = await findPago(id)
-  const body = requireRecord(value)
-  if ('pedido' in body || 'monto' in body || 'preferenceId' in body || 'externalReference' in body) {
-    throw new AppError('Payment identity and amount are managed by the payment workflow', 400)
-  }
-  if (
-    body.estado !== undefined &&
-    !Object.values(EstadoPago).some(estado => estado === body.estado)
-  ) {
+  const body = requireAllowedFields(value, ['estado', 'mercadoPagoPaymentId', 'statusDetail', 'fechaAprobacion'])
+  const estado = Object.values(EstadoPago).find(value => value === body.estado)
+  if (body.estado !== undefined && estado === undefined) {
     throw new AppError('Invalid payment status', 400)
   }
-  em.assign(pago, body)
+  const updates: Partial<Pick<Pago, 'estado' | 'mercadoPagoPaymentId' | 'statusDetail' | 'fechaAprobacion'>> = {}
+  if (estado !== undefined) updates.estado = estado
+  if ('mercadoPagoPaymentId' in body) {
+    updates.mercadoPagoPaymentId = body.mercadoPagoPaymentId === null
+      ? undefined
+      : requireString(body.mercadoPagoPaymentId, 'mercadoPagoPaymentId')
+  }
+  if ('statusDetail' in body) {
+    updates.statusDetail = body.statusDetail === null
+      ? undefined
+      : requireString(body.statusDetail, 'statusDetail')
+  }
+  if ('fechaAprobacion' in body) {
+    if (body.fechaAprobacion === null) {
+      updates.fechaAprobacion = undefined
+    } else {
+      const fechaAprobacion = new Date(requireString(body.fechaAprobacion, 'fechaAprobacion'))
+      if (Number.isNaN(fechaAprobacion.getTime())) {
+        throw new AppError('fechaAprobacion must be a valid date', 400)
+      }
+      updates.fechaAprobacion = fechaAprobacion
+    }
+  }
+  em.assign(pago, updates)
   await em.flush()
   return pago
 }

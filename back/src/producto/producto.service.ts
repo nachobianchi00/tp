@@ -1,6 +1,7 @@
 import { orm } from '../shared/db/orm.js'
 import {
   optionalBoolean,
+  requireAllowedFields,
   requireNonNegativeAmount,
   requireNonNegativeInteger,
   requirePositiveInteger,
@@ -65,7 +66,9 @@ export async function createProducto(value: unknown) {
 
 export async function updateProducto(id: number, value: unknown) {
   const producto = await findProducto(id)
-  const body = requireRecord(value)
+  const body = requireAllowedFields(value, [
+    'nombre', 'descripcion', 'precio', 'cantidad', 'estado', 'categorias',
+  ])
   const updates: Partial<Pick<Producto, 'nombre' | 'descripcion' | 'precio' | 'cantidad' | 'estado'>> = {}
   if ('nombre' in body) updates.nombre = requireString(body.nombre, 'nombre')
   if ('descripcion' in body) updates.descripcion = requireString(body.descripcion, 'descripcion')

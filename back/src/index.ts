@@ -58,7 +58,9 @@ app.use((_, res) => {
 
 app.use(globalErrorHandler)
 
-await syncSchema()//never in production
+if (process.env.NODE_ENV !== 'production') {
+    await syncSchema()
+}
 
 
 app.listen(3000, () => {
