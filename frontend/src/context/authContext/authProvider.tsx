@@ -18,16 +18,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    // Limita la espera inicial e ignora respuestas que lleguen después.
+    const temporizador = setTimeout(() => {
+      active = false;
+      setChecking(false);
+    }, 5000);
     // StrictMode repite los efectos en desarrollo; comparte esta consulta inicial.
     initialCheck.current ??= authService.me();
     initialCheck.current.then(current => {
       if (active) setIdentity(current);
-    }).catch(cause => {
-      if (active) setError(errorMessage(cause));
+    }).catch(() => {
+      // La consulta inicial es silenciosa; runOperation conserva los errores manuales.
     }).finally(() => {
+      clearTimeout(temporizador);
       if (active) setChecking(false);
     });
-    return () => { active = false; };
+    return () => { active = false; clearTimeout(temporizador); };
   }, []);
 
   async function runOperation(operation: () => Promise<AuthIdentity | null>): Promise<boolean> {
