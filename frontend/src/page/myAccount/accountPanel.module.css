@@ -1,0 +1,127 @@
+.titulo {
+  margin: 0 0 1.25rem;
+  font-size: 1.4rem;
+  color: var(--color-primary);
+}
+
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  background: #e6f4ea;
+  color: #1e6b34;
+}
+
+.error {
+  margin: 0 0 1rem;
+  color: #9f2020;
+  overflow-wrap: anywhere;
+}
+
+.texto {
+  margin: 0 0 1rem;
+  color: var(--color-text-light);
+}
+
+/* modo lectura */
+.datos {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.dato {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.datoLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+.datoValor {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* formularios */
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form label {
+  font-weight: 600;
+}
+
+.form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+}
+
+.form input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.separador {
+  margin: 0.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* botones */
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.boton {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0.65rem 1.4rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 24px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.secundario {
+  background: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.peligro {
+  border-color: #9f2020;
+  background: var(--color-secondary);
+  color: #9f2020;
+}
+
+.peligroLleno {
+  border-color: #9f2020;
+  background: #9f2020;
+  color: var(--color-on-primary);
+}
+
+.boton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

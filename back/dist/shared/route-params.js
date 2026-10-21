@@ -1,10 +1,11 @@
+import { AppError } from './service-errors.js';
 export function parseRouteId(value) {
     if (typeof value !== 'string') {
-        throw new TypeError('Route parameter id must be a single string');
+        throw new AppError('Route parameter id must be a single string', 400);
     }
     const id = Number.parseInt(value, 10);
     if (!Number.isSafeInteger(id)) {
-        throw new TypeError('Route parameter id must be a safe integer');
+        throw new AppError('Route parameter id must be a safe integer', 400);
     }
     return id;
 }

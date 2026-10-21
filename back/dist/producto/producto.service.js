@@ -1,26 +1,26 @@
 import { orm } from '../shared/db/orm.js';
-import { ServiceError, optionalBoolean, requireNonNegativeAmount, requireNonNegativeInteger, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js';
+import { optionalBoolean, requireAllowedFields, requireNonNegativeAmount, requireNonNegativeInteger, requirePositiveInteger, requireRecord, requireString, AppError, } from '../shared/service-errors.js';
 import { Categoria } from '../categoria/categoria.entity.js';
 import { Producto } from './producto.entity.js';
 const em = orm.em;
 const MAX_PRODUCT_PRICE = 99_999_999.99;
 async function findCategorias(value) {
     if (!Array.isArray(value)) {
-        throw new ServiceError('categorias must be an array of category IDs', 400);
+        throw new AppError('categorias must be an array of category IDs', 400);
     }
     const categoriaIds = value.map((id, index) => requirePositiveInteger(id, `categorias[${index}]`));
     if (new Set(categoriaIds).size !== categoriaIds.length) {
-        throw new ServiceError('categorias must not contain duplicate IDs', 400);
+        throw new AppError('categorias must not contain duplicate IDs', 400);
     }
     const categorias = await em.find(Categoria, { id: { $in: categoriaIds } });
     if (categorias.length !== categoriaIds.length) {
-        throw new ServiceError('One or more categories were not found', 404);
+        throw new AppError('One or more categories were not found', 404);
     }
     return categorias;
 }
 function validateProductPrice(precio) {
     if (precio > MAX_PRODUCT_PRICE) {
-        throw new ServiceError('precio exceeds the supported amount', 400);
+        throw new AppError('precio exceeds the supported amount', 400);
     }
 }
 export async function findAllProductos() {
@@ -29,7 +29,7 @@ export async function findAllProductos() {
 export async function findProducto(id) {
     const producto = await em.findOne(Producto, { id }, { populate: ['categorias'] });
     if (!producto)
-        throw new ServiceError('Producto not found', 404);
+        throw new AppError('Producto not found', 404);
     return producto;
 }
 export async function createProducto(value) {
@@ -48,7 +48,9 @@ export async function createProducto(value) {
 }
 export async function updateProducto(id, value) {
     const producto = await findProducto(id);
-    const body = requireRecord(value);
+    const body = requireAllowedFields(value, [
+        'nombre', 'descripcion', 'precio', 'cantidad', 'estado', 'categorias',
+    ]);
     const updates = {};
     if ('nombre' in body)
         updates.nombre = requireString(body.nombre, 'nombre');

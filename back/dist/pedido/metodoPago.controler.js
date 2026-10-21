@@ -1,48 +1,22 @@
 import { parseRouteId } from '../shared/route-params.js';
-import { sendServiceError } from '../shared/service-errors.js';
 import { createMetodoPago, deleteMetodoPago, findAllMetodosPago, findMetodoPago, updateMetodoPago, } from './metodoPago.service.js';
 async function findAll(_req, res) {
-    try {
-        res.json({ message: 'found all metodos de pago', data: await findAllMetodosPago() });
-    }
-    catch (error) {
-        sendServiceError(res, error);
-    }
+    res.json({ message: 'found all metodos de pago', data: await findAllMetodosPago() });
 }
 async function findOne(req, res) {
-    try {
-        res.json({ message: 'found metodo de pago', data: await findMetodoPago(parseRouteId(req.params.id)) });
-    }
-    catch (error) {
-        sendServiceError(res, error);
-    }
+    res.json({ message: 'found metodo de pago', data: await findMetodoPago(parseRouteId(req.params.id)) });
 }
 async function add(req, res) {
-    try {
-        res.status(201).json({ message: 'metodo de pago created', data: await createMetodoPago(req.body) });
-    }
-    catch (error) {
-        sendServiceError(res, error);
-    }
+    res.status(201).json({ message: 'metodo de pago created', data: await createMetodoPago(req.body) });
 }
 async function update(req, res) {
-    try {
-        res.json({
-            message: 'metodo de pago updated',
-            data: await updateMetodoPago(parseRouteId(req.params.id), req.body),
-        });
-    }
-    catch (error) {
-        sendServiceError(res, error);
-    }
+    res.json({
+        message: 'metodo de pago updated',
+        data: await updateMetodoPago(parseRouteId(req.params.id), req.body),
+    });
 }
 async function remove(req, res) {
-    try {
-        await deleteMetodoPago(parseRouteId(req.params.id));
-        res.json({ message: 'metodo de pago deleted' });
-    }
-    catch (error) {
-        sendServiceError(res, error);
-    }
+    await deleteMetodoPago(parseRouteId(req.params.id));
+    res.json({ message: 'metodo de pago deleted' });
 }
 export { findAll, findOne, add, update, remove };

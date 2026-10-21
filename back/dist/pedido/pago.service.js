@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js';
-import { ServiceError, requireNonNegativeAmount, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js';
+import { AppError, requireAllowedFields, requireNonNegativeAmount, requirePositiveInteger, requireRecord, requireString } from '../shared/service-errors.js';
 import { Pedido } from './pedido.entity.js';
 import { EstadoPago, Pago } from './pago.entity.js';
 const em = orm.em;
@@ -9,7 +9,7 @@ export async function findAllPagos() {
 export async function findPago(id) {
     const pago = await em.findOne(Pago, { id }, { populate: ['pedido'] });
     if (!pago)
-        throw new ServiceError('Pago not found', 404);
+        throw new AppError('Pago not found', 404);
     return pago;
 }
 export async function createPago(value) {
@@ -20,13 +20,13 @@ export async function createPago(value) {
     return em.transactional(async (transactionalEm) => {
         const pedido = await transactionalEm.findOne(Pedido, { id: pedidoId });
         if (!pedido)
-            throw new ServiceError('Pedido not found', 404);
+            throw new AppError('Pedido not found', 404);
         if (await transactionalEm.findOne(Pago, { pedido })) {
-            throw new ServiceError('A payment already exists for this order', 409);
+            throw new AppError('A payment already exists for this order', 409);
         }
         const monto = requireNonNegativeAmount(Number(pedido.total), 'pedido total');
         if (body.monto !== undefined && requireNonNegativeAmount(body.monto, 'monto') !== monto) {
-            throw new ServiceError('Payment amount must match the order total', 409);
+            throw new AppError('Payment amount must match the order total', 409);
         }
         const pago = transactionalEm.create(Pago, {
             pedido,
@@ -42,15 +42,37 @@ export async function createPago(value) {
 }
 export async function updatePago(id, value) {
     const pago = await findPago(id);
-    const body = requireRecord(value);
-    if ('pedido' in body || 'monto' in body || 'preferenceId' in body || 'externalReference' in body) {
-        throw new ServiceError('Payment identity and amount are managed by the payment workflow', 400);
+    const body = requireAllowedFields(value, ['estado', 'mercadoPagoPaymentId', 'statusDetail', 'fechaAprobacion']);
+    const estado = Object.values(EstadoPago).find(value => value === body.estado);
+    if (body.estado !== undefined && estado === undefined) {
+        throw new AppError('Invalid payment status', 400);
     }
-    if (body.estado !== undefined &&
-        !Object.values(EstadoPago).some(estado => estado === body.estado)) {
-        throw new ServiceError('Invalid payment status', 400);
+    const updates = {};
+    if (estado !== undefined)
+        updates.estado = estado;
+    if ('mercadoPagoPaymentId' in body) {
+        updates.mercadoPagoPaymentId = body.mercadoPagoPaymentId === null
+            ? undefined
+            : requireString(body.mercadoPagoPaymentId, 'mercadoPagoPaymentId');
     }
-    em.assign(pago, body);
+    if ('statusDetail' in body) {
+        updates.statusDetail = body.statusDetail === null
+            ? undefined
+            : requireString(body.statusDetail, 'statusDetail');
+    }
+    if ('fechaAprobacion' in body) {
+        if (body.fechaAprobacion === null) {
+            updates.fechaAprobacion = undefined;
+        }
+        else {
+            const fechaAprobacion = new Date(requireString(body.fechaAprobacion, 'fechaAprobacion'));
+            if (Number.isNaN(fechaAprobacion.getTime())) {
+                throw new AppError('fechaAprobacion must be a valid date', 400);
+            }
+            updates.fechaAprobacion = fechaAprobacion;
+        }
+    }
+    em.assign(pago, updates);
     await em.flush();
     return pago;
 }

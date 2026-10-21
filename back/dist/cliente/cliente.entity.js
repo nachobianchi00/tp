@@ -46,7 +46,7 @@ __decorate([
     __metadata("design:type", String)
 ], Cliente.prototype, "mail", void 0);
 __decorate([
-    Property({ nullable: false }),
+    Property({ nullable: false, hidden: true }),
     __metadata("design:type", String)
 ], Cliente.prototype, "password", void 0);
 __decorate([

@@ -20,7 +20,11 @@ export default function BarTop() {
       <Navegator />
 
       <div className={styles.acciones}>
-        <Link to="/mi-cuenta" className={styles.usuarioLink}>
+        <Link
+          to={identity ? '/mi-cuenta' : '/login'}
+          state={identity ? undefined : { from: { pathname: '/mi-cuenta' } }}
+          className={styles.usuarioLink}
+        >
           <img src={userIcon} alt="" className={styles.iconUsuario} />
           <span>{checking || identity ? 'Mi cuenta' : 'Ingresar'}</span>
         </Link>

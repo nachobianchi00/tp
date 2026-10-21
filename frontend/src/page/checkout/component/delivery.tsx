@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../../context/authContext/useAuth';
 import { useCatalog } from '../../../context/catalogContext/useCatalog';
-import { clienteMock } from '../../../mock/clients';
+import { getClient } from '../../../service/client.service';
 import type { DeliveryData } from '../../../type/deliveryData';
 import type { DeliveryMethod } from '../../../type/deliveryMethod';
 import styles from './delivery.module.css';
@@ -11,6 +13,12 @@ interface EntregaProps {
 
 export default function Entrega({ entregaData, onChange }: EntregaProps) {
   const { deliveryMethods } = useCatalog();
+  const { identity } = useAuth();
+  const [direccion, setDireccion] = useState('');
+
+  useEffect(() => {
+    if (identity) getClient(identity.id).then((c) => setDireccion(c.direccion)).catch(() => {});
+  }, [identity]);
 
   function handleSelectMetodo(metodo: DeliveryMethod) {
     onChange({ ...entregaData, metodoEnvio: metodo });
@@ -45,7 +53,7 @@ export default function Entrega({ entregaData, onChange }: EntregaProps) {
           <p className={styles.envioInfo}>Tiempo estimado: {entregaData.metodoEnvio.tiempoEstimado}</p>
           <div className={styles.direccionBox}>
             <p className={styles.direccionLabel}>Se enviará a:</p>
-            <p className={styles.direccionTexto}>{clienteMock.direccion}</p>
+            <p className={styles.direccionTexto}>{direccion}</p>
           </div>
         </>
       )}

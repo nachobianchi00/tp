@@ -1,10 +1,9 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './component/header/header';
 import Footer from './component/footer/footer';
 import ProductDetail from './page/productDetail/productDetail';
 import Cart from './page/cart/cart';
 import Checkout from './page/checkout/checkout';
-import MyAccount from './page/myAccount/myAccount';
 import styles from './app.module.css';
 import Home from './page/home/home';
 import Categories from './page/categories/categories';
@@ -15,6 +14,13 @@ import { AuthProvider } from './context/authContext/authProvider';
 // import AboutUs from './page/aboutUs/aboutUs';
 import ProtectedRoute from './component/protectedRoute/protectedRoute';
 import CatalogProvider from './context/catalogContext/catalogProvider'
+import Order from './page/order/order';
+import MyAccount from './page/myAccount/myAccount';
+import MyOrders from './page/myAccount/page/myOrders/myOrders';
+import MyData from './page/myAccount/page/myData/myData';
+import EditData from './page/myAccount/page/myData/editData';
+import ChangePassword from './page/myAccount/page/myData/changePassword';
+import DeleteAccount from './page/myAccount/page/myData/deleteAccount';
 
 
 function App() {
@@ -36,7 +42,16 @@ function App() {
             <Route path="/registro" element={<Register />} />
             <Route element={<ProtectedRoute tipo="cliente" />}>
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/pedido/:id" element={<Order />} />
               <Route path="/mi-cuenta" element={<MyAccount />} />
+            </Route>
+            <Route path="/mi-cuenta" element={<MyAccount />}>
+              <Route index element={<Navigate to="pedidos" replace />} />
+              <Route path="pedidos" element={<MyOrders />} />
+              <Route path="datos" element={<MyData />} />
+              <Route path="datos/editar" element={<EditData />} />
+              <Route path="datos/contrasena" element={<ChangePassword />} />
+              <Route path="datos/eliminar" element={<DeleteAccount />} />
             </Route>
           </Routes>
         </main>

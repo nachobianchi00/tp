@@ -1,5 +1,9 @@
 // src/page/checkout/component/resumen.tsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../context/cartContext/useCart';
+import { HttpError } from '../../../service/http';
+import { createOrder } from '../../../service/order.service';
 import type { DeliveryData } from '../../../type/deliveryData';
 import type { PayData } from '../../../type/payData';
 import styles from './resume.module.css';
@@ -10,7 +14,10 @@ interface ResumenProps {
 }
 
 export default function Resumen({ entregaData, payData }: ResumenProps) {
-  const { items, totalPrice } = useCart();
+  const { items, totalPrice, clearCart } = useCart();
+  const navigate = useNavigate();
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
   const costoEnvio = entregaData.metodoEnvio?.costo ?? 0;
   const total = totalPrice + costoEnvio;
@@ -18,10 +25,20 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
   const puedeConfirmar =
     items.length > 0 && entregaData.metodoEnvio !== null && payData.metodoPago !== null;
 
-  function handleConfirmar() {
-    if (!puedeConfirmar) return;
-    console.log('Pedido confirmado:', { items, entregaData, payData, total });
-    // más adelante, acá se dispara el pedido real al backend
+  async function handleConfirmar() {
+    if (!puedeConfirmar || sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const id = await createOrder(items, entregaData, payData);
+      clearCart();
+      navigate(`/pedido/${id}`, { replace: true });
+    } catch (e) {
+      if (e instanceof HttpError && e.status === 401) setError('Tu sesión expiró. Volvé a iniciar sesión.');
+      else if (e instanceof HttpError && e.status === 409) setError('Algún producto ya no tiene stock suficiente. Revisá tu carrito.');
+      else setError('No pudimos crear el pedido. Intentá de nuevo.');
+      setSending(false);
+    }
   }
 
   return (
@@ -56,11 +73,13 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
 
       <button
         onClick={handleConfirmar}
-        disabled={!puedeConfirmar}
+        disabled={!puedeConfirmar || sending}
         className={styles.botonConfirmar}
       >
-        Confirmar pedido
+        {sending ? 'Confirmando…' : 'Confirmar pedido'}
       </button>
+
+      {error && <p className={styles.avisoIncompleto}>{error}</p>}
 
       {!puedeConfirmar && (
         <p className={styles.avisoIncompleto}>

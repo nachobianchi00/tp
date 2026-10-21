@@ -1,4 +1,3 @@
-import type { ProductType } from './productType';
 import type { DeliveryMethod } from './deliveryMethod';
 import type { PayMethod } from './payMethod';
 
@@ -8,7 +7,7 @@ export interface DetallePedidoType {
   id: number;
   cantidad: number;
   precioUnitario: number;
-  producto: ProductType;
+  producto: number;
 }
 
 export interface PedidoType {
@@ -16,6 +15,7 @@ export interface PedidoType {
   estado: PedidoEstado;
   fechaCreacion: string;
   total: number;
+  observacion?: string | null;
   metodoEnvio: DeliveryMethod;
   metodoPago: PayMethod;
   detallePedido: DetallePedidoType[];

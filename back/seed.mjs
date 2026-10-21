@@ -81,7 +81,6 @@ for (const [nombre, descripcion, precio, cantidad, categorias] of productos) {
 await post('/metodos-envio', { descripcion: 'Retiro en sucursal', costo: 0, requiereDireccion: false, tiempoEstimado: 'Disponible en el día' })
 await post('/metodos-envio', { descripcion: 'Envío a domicilio', costo: 2500, requiereDireccion: true, tiempoEstimado: '24 a 48 hs' })
 await post('/metodos-pago', { descripcion: 'Efectivo' })
-await post('/metodos-pago', { descripcion: 'Mercado Pago' })
 await post('/metodos-pago', { descripcion: 'Transferencia bancaria' })
 
 console.log(`Listo: ${nombresCategorias.length} categorías, ${productos.length} productos, 2 métodos de envío y 3 de pago.`)

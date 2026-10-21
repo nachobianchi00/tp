@@ -5,5 +5,4 @@ export interface DeliveryMethod {
   requiereDireccion: boolean;
   tiempoEstimado?: string;
   estado: boolean;
-  observacion?: string;
 }

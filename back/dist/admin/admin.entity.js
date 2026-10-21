@@ -33,7 +33,7 @@ __decorate([
     __metadata("design:type", String)
 ], Admin.prototype, "mail", void 0);
 __decorate([
-    Property({ nullable: false }),
+    Property({ nullable: false, hidden: true }),
     __metadata("design:type", String)
 ], Admin.prototype, "password", void 0);
 Admin = __decorate([

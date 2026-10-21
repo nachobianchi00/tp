@@ -17,7 +17,6 @@ let MetodoEnvio = class MetodoEnvio extends BaseEntity {
     requiereDireccion;
     tiempoEstimado;
     estado;
-    observacion;
     pedidos = new Collection(this);
 };
 __decorate([
@@ -40,10 +39,6 @@ __decorate([
     Property({ default: true }),
     __metadata("design:type", Boolean)
 ], MetodoEnvio.prototype, "estado", void 0);
-__decorate([
-    Property({ nullable: true }),
-    __metadata("design:type", String)
-], MetodoEnvio.prototype, "observacion", void 0);
 __decorate([
     OneToMany(() => Pedido, pedido => pedido.metodoEnvio) // esta realcion apunta a pedido y en el objeto pedido podemos encontrar el metodo de envio que se utilizo
     ,

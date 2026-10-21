@@ -1,5 +1,5 @@
 import { orm } from '../shared/db/orm.js';
-import { optionalBoolean, requireRecord, requireString, ServiceError } from '../shared/service-errors.js';
+import { optionalBoolean, requireAllowedFields, requireRecord, requireString, AppError } from '../shared/service-errors.js';
 import { MetodoPago } from './metodoPago.entity.js';
 const em = orm.em;
 export async function findAllMetodosPago() {
@@ -8,7 +8,7 @@ export async function findAllMetodosPago() {
 export async function findMetodoPago(id) {
     const metodoPago = await em.findOne(MetodoPago, { id });
     if (!metodoPago)
-        throw new ServiceError('Metodo de pago not found', 404);
+        throw new AppError('Metodo de pago not found', 404);
     return metodoPago;
 }
 export async function createMetodoPago(value) {
@@ -21,7 +21,13 @@ export async function createMetodoPago(value) {
 }
 export async function updateMetodoPago(id, value) {
     const metodoPago = await findMetodoPago(id);
-    em.assign(metodoPago, requireRecord(value));
+    const body = requireAllowedFields(value, ['descripcion', 'estado']);
+    const updates = {};
+    if ('descripcion' in body)
+        updates.descripcion = requireString(body.descripcion, 'descripcion');
+    if ('estado' in body)
+        updates.estado = optionalBoolean(body.estado, 'estado', true);
+    em.assign(metodoPago, updates);
     await em.flush();
     return metodoPago;
 }

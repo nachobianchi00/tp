@@ -27,6 +27,7 @@ let Pedido = class Pedido extends BaseEntity {
     estado;
     fechaCreacion; // generado automáticamente
     total;
+    observacion;
     cliente;
     detallePedido = new Collection(this);
     metodoPago;
@@ -45,6 +46,10 @@ __decorate([
     Property({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Pedido.prototype, "total", void 0);
+__decorate([
+    Property({ nullable: true }),
+    __metadata("design:type", String)
+], Pedido.prototype, "observacion", void 0);
 __decorate([
     ManyToOne(() => Cliente),
     __metadata("design:type", Object)
