@@ -18,16 +18,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let activo = true;
+    // Limita la espera inicial e ignora respuestas que lleguen después.
+    const temporizador = setTimeout(() => {
+      activo = false;
+      establecerComprobandoSesion(false);
+    }, 5000);
     // StrictMode repite los efectos en desarrollo; comparte esta consulta inicial.
     consultaInicial.current ??= authService.me();
     consultaInicial.current.then(identidadActual => {
       if (activo) establecerIdentidad(identidadActual);
-    }).catch(causa => {
-      if (activo) establecerError(mensajeDeError(causa));
+    }).catch(() => {
+      // La consulta inicial es silenciosa; ejecutarOperacion conserva los errores manuales.
     }).finally(() => {
+      clearTimeout(temporizador);
       if (activo) establecerComprobandoSesion(false);
     });
-    return () => { activo = false; };
+    return () => { activo = false; clearTimeout(temporizador); };
   }, []);
 
   async function ejecutarOperacion(operacion: () => Promise<AuthIdentity | null>): Promise<boolean> {
