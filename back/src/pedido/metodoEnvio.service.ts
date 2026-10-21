@@ -26,7 +26,6 @@ export async function createMetodoEnvio(value: unknown) {
     requiereDireccion: optionalBoolean(body.requiereDireccion, 'requiereDireccion', true),
     tiempoEstimado: optionalString(body.tiempoEstimado, 'tiempoEstimado'),
     estado: optionalBoolean(body.estado, 'estado', true),
-    observacion: optionalString(body.observacion, 'observacion'),
   })
   await em.flush()
   return metodoEnvio
@@ -35,9 +34,9 @@ export async function createMetodoEnvio(value: unknown) {
 export async function updateMetodoEnvio(id: number, value: unknown) {
   const metodoEnvio = await findMetodoEnvio(id)
   const body = requireAllowedFields(value, [
-    'descripcion', 'costo', 'requiereDireccion', 'tiempoEstimado', 'estado', 'observacion',
+    'descripcion', 'costo', 'requiereDireccion', 'tiempoEstimado', 'estado',
   ])
-  const updates: Partial<Pick<MetodoEnvio, 'descripcion' | 'costo' | 'requiereDireccion' | 'tiempoEstimado' | 'estado' | 'observacion'>> = {}
+  const updates: Partial<Pick<MetodoEnvio, 'descripcion' | 'costo' | 'requiereDireccion' | 'tiempoEstimado' | 'estado'>> = {}
   if ('descripcion' in body) updates.descripcion = requireString(body.descripcion, 'descripcion')
   if ('costo' in body) {
     const costo = requireNonNegativeAmount(body.costo, 'costo')
@@ -49,7 +48,6 @@ export async function updateMetodoEnvio(id: number, value: unknown) {
   }
   if ('tiempoEstimado' in body) updates.tiempoEstimado = optionalString(body.tiempoEstimado, 'tiempoEstimado')
   if ('estado' in body) updates.estado = optionalBoolean(body.estado, 'estado', true)
-  if ('observacion' in body) updates.observacion = optionalString(body.observacion, 'observacion')
   em.assign(metodoEnvio, updates)
   await em.flush()
   return metodoEnvio

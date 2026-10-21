@@ -13,8 +13,7 @@ Content-Type: application/json
   "costo": 55.25,
   "requiereDireccion": true,
   "tiempoEstimado": "2 dias",
-  "estado": true,
-  "observacion": "Prueba CRUD"
+  "estado": true
 }
 
 ### Get created shipping method

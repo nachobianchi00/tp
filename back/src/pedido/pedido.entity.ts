@@ -27,6 +27,9 @@ export class Pedido extends BaseEntity {
   @Property({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   total!: number;
 
+  @Property({ nullable: true })
+  observacion?: string;
+
   @ManyToOne(() => Cliente)
   cliente!: Cliente & object; 
 

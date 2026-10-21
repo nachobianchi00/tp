@@ -1,6 +1,6 @@
 import { LockMode } from '@mikro-orm/core'
 import { orm } from '../shared/db/orm.js'
-import { AppError, requireAllowedFields, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
+import { AppError, optionalString, requireAllowedFields, requirePositiveInteger, requireRecord } from '../shared/service-errors.js'
 import { Cliente } from '../cliente/cliente.entity.js'
 import { Producto } from '../producto/producto.entity.js'
 import { DetallePedido } from './detallePedido.entity.js'
@@ -20,6 +20,7 @@ interface NuevoPedidoInput {
   cliente: number
   metodoPago: number
   metodoEnvio: number
+  observacion?: string
   detallePedido: DetallePedidoInput[]
 }
 
@@ -40,6 +41,7 @@ function parseNuevoPedido(value: unknown): NuevoPedidoInput {
     cliente: requirePositiveInteger(body.cliente, 'cliente'),
     metodoPago: requirePositiveInteger(body.metodoPago, 'metodoPago'),
     metodoEnvio: requirePositiveInteger(body.metodoEnvio, 'metodoEnvio'),
+    observacion: optionalString(body.observacion, 'observacion'),
     detallePedido,
   }
 }
@@ -107,6 +109,7 @@ export async function createPedido(value: unknown) {
       cliente,
       metodoPago,
       metodoEnvio,
+      observacion: input.observacion,
       estado: EstadoPedido.PENDIENTE,
       fechaCreacion: new Date(),
       total: 0,
@@ -134,7 +137,7 @@ export async function createPedido(value: unknown) {
 }
 
 export async function updatePedido(id: number, value: unknown) {
-  const body = requireAllowedFields(value, ['cliente', 'metodoPago'])
+  const body = requireAllowedFields(value, ['cliente', 'metodoPago', 'observacion'])
   return em.transactional(async transactionalEm => {
     const pedido = await transactionalEm.findOne(
       Pedido,
@@ -158,6 +161,7 @@ export async function updatePedido(id: number, value: unknown) {
       if (!metodoPago.estado) throw new AppError('Metodo de pago is inactive', 409)
       pedido.metodoPago = metodoPago
     }
+    if ('observacion' in body) pedido.observacion = optionalString(body.observacion, 'observacion')
     await transactionalEm.flush()
     return pedido
   })

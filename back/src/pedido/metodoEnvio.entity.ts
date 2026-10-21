@@ -20,9 +20,6 @@ export class MetodoEnvio extends BaseEntity {
   @Property({ default: true })
   estado!: boolean
 
-  @Property({ nullable: true })
-  observacion?: string
-
   @OneToMany(() => Pedido, pedido => pedido.metodoEnvio ) // esta realcion apunta a pedido y en el objeto pedido podemos encontrar el metodo de envio que se utilizo
   pedidos = new Collection<Pedido>(this)
 }

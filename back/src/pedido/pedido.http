@@ -16,6 +16,7 @@ Content-Type: application/json
   "cliente": {{clienteId}},
   "metodoPago": {{metodoPagoId}},
   "metodoEnvio": {{metodoEnvioId}},
+  "observacion": "Entregar en la casa de rejas negras",
   "detallePedido": [
     {
       "producto": 1,
