@@ -14,20 +14,20 @@ declare global {
   }
 }
 
-type PermissionCheck = (request: Request, identity: AuthIdentity) => void
+type ComprobacionDePermisos = (solicitud: Request, identidad: AuthIdentity) => void
 
 /** Comparte la lectura de sesión y el manejo de errores entre las comprobaciones. */
-function createAuthorizationMiddleware(checkPermissions: PermissionCheck): RequestHandler {
-  return async (request, response, next) => {
+function crearMiddlewareDeAutorizacion(comprobarPermisos: ComprobacionDePermisos): RequestHandler {
+  return async (solicitud, respuesta, next) => {
     try {
       // No se confía en una identidad previa de locals, del body ni de la query.
-      delete response.locals.identity
-      const identity = await getSessionIdentity(request)
-      if (!identity) throw new ServiceError('No autenticado', 401)
+      delete respuesta.locals.identity
+      const identidad = await getSessionIdentity(solicitud)
+      if (!identidad) throw new ServiceError('No autenticado', 401)
 
-      checkPermissions(request, identity)
+      comprobarPermisos(solicitud, identidad)
       // getSessionIdentity devuelve una copia con únicamente id y tipo.
-      response.locals.identity = identity
+      respuesta.locals.identity = identidad
     } catch (error) {
       next(error)
       return
@@ -36,43 +36,52 @@ function createAuthorizationMiddleware(checkPermissions: PermissionCheck): Reque
   }
 }
 
-function validateAccountType(tipo: AccountType): void {
+function validarTipoDeCuenta(tipo: AccountType): void {
   if (tipo !== 'cliente' && tipo !== 'admin') {
     throw new Error('Authorization requires a valid account type')
   }
 }
 
 /** Exige una sesión autenticada y respeta su vencimiento absoluto de 30 minutos. */
-export const requireAuthentication: RequestHandler = createAuthorizationMiddleware(() => {})
+export const requireAuthentication: RequestHandler = crearMiddlewareDeAutorizacion(() => {})
 
 /** Puede usarse sola: comprueba también la autenticación antes de revisar el tipo. */
 export function requireAccountType(...tipos: AccountType[]): RequestHandler {
   if (tipos.length === 0) throw new Error('Authorization requires at least one account type')
-  tipos.forEach(validateAccountType)
-  const allowedTypes = new Set(tipos)
-  return createAuthorizationMiddleware((_request, identity) => {
-    if (!allowedTypes.has(identity.tipo)) throw new ServiceError('Acceso no autorizado', 403)
+  tipos.forEach(validarTipoDeCuenta)
+  const tiposPermitidos = new Set(tipos)
+  return crearMiddlewareDeAutorizacion((_request, identidad) => {
+    if (!tiposPermitidos.has(identidad.tipo)) throw new ServiceError('Acceso no autorizado', 403)
   })
 }
+
+function comprobarTitularidad(solicitud: Request, identidad: AuthIdentity, tipo: AccountType, nombreParametro: string): void {
+  if (identidad.tipo !== tipo) throw new ServiceError('Acceso no autorizado', 403)
+  const valor = Object.hasOwn(solicitud.params, nombreParametro) ? solicitud.params[nombreParametro] : undefined
+  // Evita interpretar "7otro" como 7; admite únicamente un entero positivo completo.
+  if (typeof valor !== 'string' || !/^\d+$/.test(valor)
+    || !Number.isSafeInteger(Number(valor)) || Number(valor) <= 0) {
+    throw new ServiceError('ID de cuenta inválido', 400)
+  }
+  if (Number(valor) !== identidad.id) throw new ServiceError('Acceso no autorizado', 403)
+}
+
+/** Comprueba la sesión una vez: Admin consulta cualquier Cliente; Cliente solo su cuenta. */
+export const exigirTitularClienteOAdmin: RequestHandler = crearMiddlewareDeAutorizacion((solicitud, identidad) => {
+  if (identidad.tipo !== 'admin') comprobarTitularidad(solicitud, identidad, 'cliente', 'id')
+})
 
 /**
  * Compara el ID de una cuenta del tipo indicado con la sesión; no concede excepciones a Admin.
  * No sirve para IDs de Pedido, DetallePedido o Pago: esos recursos requieren comprobar sus relaciones.
  */
-export function requireAccountOwner(tipo: AccountType, parameterName = 'id'): RequestHandler {
-  validateAccountType(tipo)
-  if (typeof parameterName !== 'string' || !parameterName || parameterName !== parameterName.trim()) {
+export function requireAccountOwner(tipo: AccountType, nombreParametro = 'id'): RequestHandler {
+  validarTipoDeCuenta(tipo)
+  if (typeof nombreParametro !== 'string' || !nombreParametro || nombreParametro !== nombreParametro.trim()) {
     throw new Error('Authorization requires a route parameter name')
   }
 
-  return createAuthorizationMiddleware((request, identity) => {
-    if (identity.tipo !== tipo) throw new ServiceError('Acceso no autorizado', 403)
-    const value = Object.hasOwn(request.params, parameterName) ? request.params[parameterName] : undefined
-    // Evita interpretar "7otro" como 7; admite únicamente un entero positivo completo.
-    if (typeof value !== 'string' || !/^\d+$/.test(value)
-      || !Number.isSafeInteger(Number(value)) || Number(value) <= 0) {
-      throw new ServiceError('ID de cuenta inválido', 400)
-    }
-    if (Number(value) !== identity.id) throw new ServiceError('Acceso no autorizado', 403)
+  return crearMiddlewareDeAutorizacion((solicitud, identidad) => {
+    comprobarTitularidad(solicitud, identidad, tipo, nombreParametro)
   })
 }

@@ -14,36 +14,35 @@ export interface AuthIdentity {
 }
 
 const em = orm.em
-let dummyHash: Promise<string> | undefined
+let hashFicticio: Promise<string> | undefined
 
-function parseCredentials(value: unknown): { tipo: AccountType; mail: string; password: string } {
-  const body = requireRecord(value)
-  const tipo = body.tipo
+function validarCredenciales(valor: unknown): { tipo: AccountType; mail: string; password: string } {
+  const datos = requireRecord(valor)
+  const tipo = datos.tipo
   if (tipo !== 'cliente' && tipo !== 'admin') {
     throw new ServiceError('tipo must be cliente or admin', 400)
   }
-  const mail = requireString(body.mail, 'mail').toLowerCase()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+  const correo = requireString(datos.mail, 'mail').toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
     throw new ServiceError('mail must be a valid email address', 400)
   }
-  const password = requirePassword(body.password)
-  return { tipo, mail, password }
+  const contrasena = requirePassword(datos.password)
+  return { tipo, mail: correo, password: contrasena }
 }
 
-async function passwordMatches(storedHash: string | undefined, password: string): Promise<boolean> {
-  if (storedHash !== undefined) {
+async function coincideContrasena(hashGuardado: string | undefined, contrasena: string): Promise<boolean> {
+  if (hashGuardado !== undefined) {
     try {
-      return await verifyPassword(storedHash, password)
+      return await verifyPassword(hashGuardado, contrasena)
     } catch {
       // Un hash inválido, incluido texto plano, nunca habilita una comparación alternativa.
     }
   }
 
-  // Sin cuenta o con un hash inválido también se realiza trabajo Argon2.
-  // Este hash ficticio se genera una sola vez y no representa ninguna cuenta.
+  // Incluso sin cuenta válida se realiza trabajo Argon2 con un hash ficticio reutilizable.
   try {
-    dummyHash ??= hashPassword(randomBytes(32).toString('hex'))
-    await verifyPassword(await dummyHash, password)
+    hashFicticio ??= hashPassword(randomBytes(32).toString('hex'))
+    await verifyPassword(await hashFicticio, contrasena)
   } catch {
     // Si falla la biblioteca tampoco se concede acceso.
   }
@@ -51,23 +50,23 @@ async function passwordMatches(storedHash: string | undefined, password: string)
 }
 
 /** Verifica credenciales sin crear sesiones ni modificar la cuenta. */
-export async function verifyCredentials(value: unknown): Promise<AuthIdentity> {
-  const { tipo, mail, password } = parseCredentials(value)
-  let account: Cliente | Admin | null
+export async function verifyCredentials(valor: unknown): Promise<AuthIdentity> {
+  const { tipo, mail: correo, password: contrasena } = validarCredenciales(valor)
+  let cuenta: Cliente | Admin | null
   try {
-    account = tipo === 'cliente'
-      ? await em.findOne(Cliente, { mail })
-      : await em.findOne(Admin, { mail })
+    cuenta = tipo === 'cliente'
+      ? await em.findOne(Cliente, { mail: correo })
+      : await em.findOne(Admin, { mail: correo })
   } catch {
     // Los fallos de almacenamiento son errores del sistema; no se exponen detalles internos.
     throw new ServiceError('No se pudieron verificar las credenciales', 500)
   }
 
-  const matches = await passwordMatches(account?.password, password)
-  if (!account || !matches || !Number.isSafeInteger(account.id) || account.id === undefined || account.id <= 0) {
+  const contrasenaCorrecta = await coincideContrasena(cuenta?.password, contrasena)
+  if (!cuenta || !contrasenaCorrecta || !Number.isSafeInteger(cuenta.id) || cuenta.id === undefined || cuenta.id <= 0) {
     throw new ServiceError('Credenciales inválidas', 401)
   }
 
   // La identidad se construye desde la cuenta verificada, nunca desde un ID enviado por el usuario.
-  return { id: account.id, tipo }
+  return { id: cuenta.id, tipo }
 }

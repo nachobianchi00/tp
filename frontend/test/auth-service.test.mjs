@@ -82,20 +82,22 @@ test('un error HTTP con HTML conserva el estado sin exponer su contenido', async
     && error.status === 502 && !error.message.includes('ruta-servidor'));
 });
 
-test('el token se conserva en memoria, y refresh consulta otro válido', async () => {
-  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }));
+test('cada consulta de CSRF obtiene el token vigente sin caché', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }),
+    json({ csrfToken: authenticatedToken }));
   assert.equal(await service.getCsrfToken(), anonymousToken);
-  assert.equal(await service.getCsrfToken(), anonymousToken);
-  assert.equal(calls.length, 1);
-  assert.equal(await service.getCsrfToken(true), renewedToken);
+  assert.equal(await service.getCsrfToken(), renewedToken);
   assert.equal(calls.length, 2);
+  assert.equal(await service.getCsrfToken(), authenticatedToken);
+  assert.equal(calls.length, 3);
+  assert.ok(calls.every(call => call.url === '/api/auth/csrf'));
   assert.equal(calls[0].options.credentials, 'include');
 });
 
 for (const tipo of ['cliente', 'admin']) {
-  test(`login ${tipo}: pide CSRF, envía credenciales y reemplaza el token anónimo`, async () => {
+  test(`login ${tipo}: pide CSRF, envía credenciales y valida el token renovado`, async () => {
     const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
-      json({ data: { id: 7, tipo }, csrfToken: authenticatedToken }));
+      json({ data: { id: 7, tipo }, csrfToken: authenticatedToken }), json({ csrfToken: authenticatedToken }));
     assert.deepEqual(await service.login({ ...credentials, tipo }), { id: 7, tipo });
     assert.equal(calls[0].url, '/api/auth/csrf');
     assert.equal(calls[1].url, '/api/auth/login');
@@ -107,11 +109,11 @@ for (const tipo of ['cliente', 'admin']) {
       mail: 'cliente@example.com', password: credentials.password, tipo,
     });
     assert.equal(await service.getCsrfToken(), authenticatedToken);
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 3);
   });
 }
 
-test('login obtiene un token fresco aunque exista uno en memoria', async () => {
+test('login vuelve a consultar CSRF aunque se haya consultado antes', async () => {
   const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }),
     json({ data: { id: 7, tipo: 'cliente' }, csrfToken: authenticatedToken }));
   await service.getCsrfToken();
@@ -135,7 +137,7 @@ test('fallar al obtener CSRF impide enviar credenciales', async () => {
 });
 
 for (const status of [400, 401, 403, 500]) {
-  test(`login ${status}: informa error, descarta el token y no repite el POST`, async () => {
+  test(`login ${status}: informa error y no repite el POST; el siguiente token se consulta`, async () => {
     const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
       json({ message: 'detalle interno ficticio' }, status), json({ csrfToken: renewedToken }));
     await assert.rejects(service.login(credentials), error => error instanceof AuthError
@@ -150,6 +152,16 @@ test('login no concede identidad si falta el token renovado', async () => {
   const { service } = simulated(json({ csrfToken: anonymousToken }), json({ data: { id: 7, tipo: 'cliente' } }));
   await assert.rejects(service.login(credentials), error => error.kind === 'response');
 });
+
+for (const csrfToken of [null, '', 'f'.repeat(63), 'g'.repeat(64)]) {
+  test(`login no concede identidad con token renovado inválido: ${String(csrfToken)}`, async () => {
+    const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
+      json({ data: { id: 7, tipo: 'cliente' }, csrfToken }));
+    await assert.rejects(service.login(credentials), error => error.kind === 'response');
+    assert.equal(calls.length, 2);
+    assert.equal(calls.filter(call => call.options.method === 'POST').length, 1);
+  });
+}
 
 test('la pérdida de respuesta del login no dispara otro POST', async () => {
   const { service, calls } = simulated(json({ csrfToken: anonymousToken }), new TypeError('respuesta perdida ficticia'));
@@ -170,16 +182,16 @@ test('logout obtiene CSRF sin necesitar un login previo en esta instancia', asyn
   assert.equal(calls.length, 3);
 });
 
-test('recorrido login → me → logout conserva la cookie y renueva/descarta tokens', async () => {
+test('recorrido login → me → logout conserva cookies y consulta CSRF antes de cada escritura', async () => {
   const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
     json({ data: { id: 7, tipo: 'cliente' }, csrfToken: authenticatedToken }),
-    json({ data: { id: 7, tipo: 'cliente' } }), json({ csrfToken: authenticatedToken }),
+    json({ data: { id: 7, tipo: 'cliente' } }), json({ csrfToken: renewedToken }),
     json({ message: 'Sesión cerrada' }), json({ message: 'No autenticado' }, 401));
   await service.login(credentials);
   assert.deepEqual(await service.me(), { id: 7, tipo: 'cliente' });
   await service.logout();
   assert.equal(await service.me(), null);
-  assert.equal(calls[4].options.headers['X-CSRF-Token'], authenticatedToken);
+  assert.equal(calls[4].options.headers['X-CSRF-Token'], renewedToken);
   assert.ok(calls.every(call => call.options.credentials === 'include'));
 });
 
@@ -203,7 +215,7 @@ test('logout sin conexión no se confunde con cierre exitoso', async () => {
   await assert.rejects(service.logout(), error => error.kind === 'network');
 });
 
-test('un 401 de me descarta el token anterior', async () => {
+test('después de un 401 de me, CSRF se vuelve a consultar', async () => {
   const { service, calls } = simulated(json({ csrfToken: authenticatedToken }),
     json({ message: 'No autenticado' }, 401), json({ csrfToken: renewedToken }));
   await service.getCsrfToken();
@@ -227,7 +239,8 @@ const clientData = {
 const createdClient = { message: 'cliente created', data: { id: 12, nombre: 'Ana' } };
 
 test('registro 201: obtiene CSRF y envía solo los siete campos, con cookies y contraseña original', async () => {
-  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(createdClient, 201));
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json(createdClient, 201),
+    json({ csrfToken: anonymousToken }));
   assert.equal(await service.registerCliente({ ...clientData, confirmPassword: clientData.password, tipo: 'admin', id: 999 }), undefined);
   assert.equal(calls.length, 2);
   assert.equal(calls[0].url, '/api/auth/csrf');
@@ -241,12 +254,12 @@ test('registro 201: obtiene CSRF y envía solo los siete campos, con cookies y c
     direccion: 'Calle ficticia 123', telefono: '+54 341 1234567',
     mail: 'cliente@example.com', password: clientData.password,
   });
-  // El registro no regenera la sesión ni entrega identidad: conserva el token existente.
+  // El servidor puede devolver el mismo token vigente; el cliente siempre lo consulta.
   assert.equal(await service.getCsrfToken(), anonymousToken);
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
 });
 
-test('registro obtiene un token vigente aunque ya exista uno en memoria', async () => {
+test('registro vuelve a consultar CSRF aunque se haya consultado antes', async () => {
   const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }),
     json(createdClient, 201));
   await service.getCsrfToken();
@@ -271,7 +284,7 @@ for (const password of ['a', '  á ñ 🙂  ', '密码']) {
 }
 
 for (const status of [400, 409, 403, 500]) {
-  test(`registro ${status}: mensaje seguro, token descartado y ninguna repetición del POST`, async () => {
+  test(`registro ${status}: mensaje seguro, nueva consulta de token y ninguna repetición del POST`, async () => {
     const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
       json({ message: 'SQL password cookie secreto-ficticio /ruta/interna' }, status),
       json({ csrfToken: renewedToken }));

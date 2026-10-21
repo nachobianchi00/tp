@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { AuthError, authService } from '../../service/auth.service';
 import styles from './register.module.css';
 
-const initialForm = {
+const formularioInicial = {
   nombre: '',
   apellido: '',
   dni: '',
@@ -16,117 +16,117 @@ const initialForm = {
 };
 
 export default function Register() {
-  const [form, setForm] = useState(initialForm);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const busy = useRef(false);
+  const [formulario, establecerFormulario] = useState(formularioInicial);
+  const [enviando, establecerEnviando] = useState(false);
+  const [registroCompleto, establecerRegistroCompleto] = useState(false);
+  const [error, establecerError] = useState<string | null>(null);
+  const operacionEnCurso = useRef(false);
 
-  function updateField(field: keyof typeof initialForm, value: string) {
-    setForm(previous => ({ ...previous, [field]: value }));
+  function actualizarCampo(campo: keyof typeof formularioInicial, valor: string) {
+    establecerFormulario(anterior => ({ ...anterior, [campo]: valor }));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy.current || success) return;
+  async function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    if (operacionEnCurso.current || registroCompleto) return;
     // El ref bloquea dos eventos incluso antes de que React deshabilite el formulario.
-    busy.current = true;
-    setSubmitting(true);
-    setError(null);
+    operacionEnCurso.current = true;
+    establecerEnviando(true);
+    establecerError(null);
 
     try {
-      if ([form.nombre, form.apellido, form.direccion, form.telefono, form.mail].some(value => !value.trim())) {
-        setError('Completá nombre, apellido, dirección, teléfono y correo electrónico.');
+      if ([formulario.nombre, formulario.apellido, formulario.direccion, formulario.telefono, formulario.mail].some(valor => !valor.trim())) {
+        establecerError('Completá nombre, apellido, dirección, teléfono y correo electrónico.');
         return;
       }
-      const dni = Number(form.dni.trim());
+      const dni = Number(formulario.dni.trim());
       if (!Number.isSafeInteger(dni) || dni <= 0) {
-        setError('El DNI debe ser un número entero positivo y seguro.');
+        establecerError('El DNI debe ser un número entero positivo y seguro.');
         return;
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.mail.trim())) {
-        setError('Ingresá un correo electrónico válido.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.mail.trim())) {
+        establecerError('Ingresá un correo electrónico válido.');
         return;
       }
       // Igual que requirePassword(): comprobar contenido sin transformar la contraseña.
-      if (!form.password.trim()) {
-        setError('Ingresá una contraseña que no esté vacía ni contenga solamente espacios.');
+      if (!formulario.password.trim()) {
+        establecerError('Ingresá una contraseña que no esté vacía ni contenga solamente espacios.');
         return;
       }
-      if (form.password !== form.confirmPassword) {
-        setError('Las contraseñas no coinciden.');
+      if (formulario.password !== formulario.confirmPassword) {
+        establecerError('Las contraseñas no coinciden.');
         return;
       }
 
       await authService.registerCliente({
-        nombre: form.nombre,
-        apellido: form.apellido,
+        nombre: formulario.nombre,
+        apellido: formulario.apellido,
         dni,
-        direccion: form.direccion,
-        telefono: form.telefono,
-        mail: form.mail,
-        password: form.password,
+        direccion: formulario.direccion,
+        telefono: formulario.telefono,
+        mail: formulario.mail,
+        password: formulario.password,
       });
-      setSuccess(true);
-      setForm(initialForm);
-    } catch (cause) {
-      setError(cause instanceof AuthError ? cause.message : 'No se pudo crear la cuenta. Intentá nuevamente más tarde.');
+      establecerRegistroCompleto(true);
+      establecerFormulario(formularioInicial);
+    } catch (causa) {
+      establecerError(causa instanceof AuthError ? causa.message : 'No se pudo crear la cuenta. Intentá nuevamente más tarde.');
     } finally {
       // Ante errores se conservan todos los campos no sensibles.
-      setForm(previous => ({ ...previous, password: '', confirmPassword: '' }));
-      busy.current = false;
-      setSubmitting(false);
+      establecerFormulario(anterior => ({ ...anterior, password: '', confirmPassword: '' }));
+      operacionEnCurso.current = false;
+      establecerEnviando(false);
     }
   }
 
   return (
-    <section className={styles.container} aria-labelledby="register-title" aria-busy={submitting}>
+    <section className={styles.container} aria-labelledby="register-title" aria-busy={enviando}>
       <h1 id="register-title">Crear cuenta</h1>
       {error && <p className={styles.error} role="alert">{error}</p>}
 
-      {success ? (
+      {registroCompleto ? (
         <div className={styles.success}>
           <p role="status">Tu cuenta se creó correctamente. Ahora podés iniciar sesión.</p>
           <Link className={styles.link} to="/login">Ir a iniciar sesión</Link>
         </div>
       ) : (
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <form className={styles.form} onSubmit={enviarFormulario} noValidate>
           {/* Las validaciones propias respetan el contrato del backend, también para el correo. */}
-          <fieldset className={styles.fields} disabled={submitting}>
+          <fieldset className={styles.fields} disabled={enviando}>
             <label htmlFor="register-nombre">Nombre</label>
             <input id="register-nombre" name="nombre" type="text" autoComplete="given-name" required
-              value={form.nombre} onChange={event => updateField('nombre', event.target.value)} />
+              value={formulario.nombre} onChange={evento => actualizarCampo('nombre', evento.target.value)} />
 
             <label htmlFor="register-apellido">Apellido</label>
             <input id="register-apellido" name="apellido" type="text" autoComplete="family-name" required
-              value={form.apellido} onChange={event => updateField('apellido', event.target.value)} />
+              value={formulario.apellido} onChange={evento => actualizarCampo('apellido', evento.target.value)} />
 
             <label htmlFor="register-dni">DNI</label>
             <input id="register-dni" name="dni" type="text" inputMode="numeric" required
-              value={form.dni} onChange={event => updateField('dni', event.target.value)} />
+              value={formulario.dni} onChange={evento => actualizarCampo('dni', evento.target.value)} />
 
             <label htmlFor="register-direccion">Dirección</label>
             <input id="register-direccion" name="direccion" type="text" autoComplete="street-address" required
-              value={form.direccion} onChange={event => updateField('direccion', event.target.value)} />
+              value={formulario.direccion} onChange={evento => actualizarCampo('direccion', evento.target.value)} />
 
             <label htmlFor="register-telefono">Teléfono</label>
             <input id="register-telefono" name="telefono" type="tel" autoComplete="tel" required
-              value={form.telefono} onChange={event => updateField('telefono', event.target.value)} />
+              value={formulario.telefono} onChange={evento => actualizarCampo('telefono', evento.target.value)} />
 
             <label htmlFor="register-mail">Correo electrónico</label>
             <input id="register-mail" name="mail" type="email" autoComplete="email" required
-              value={form.mail} onChange={event => updateField('mail', event.target.value)} />
+              value={formulario.mail} onChange={evento => actualizarCampo('mail', evento.target.value)} />
 
             <label htmlFor="register-password">Contraseña</label>
             <input id="register-password" name="password" type="password" autoComplete="new-password" required
-              value={form.password} onChange={event => updateField('password', event.target.value)} />
+              value={formulario.password} onChange={evento => actualizarCampo('password', evento.target.value)} />
 
             <label htmlFor="register-confirm-password">Confirmación de contraseña</label>
             <input id="register-confirm-password" name="confirmPassword" type="password" autoComplete="new-password" required
-              value={form.confirmPassword} onChange={event => updateField('confirmPassword', event.target.value)} />
+              value={formulario.confirmPassword} onChange={evento => actualizarCampo('confirmPassword', evento.target.value)} />
 
             <button className={styles.button} type="submit">
-              {submitting ? 'Creando cuenta…' : 'Registrarse'}
+              {enviando ? 'Creando cuenta…' : 'Registrarse'}
             </button>
           </fieldset>
           <Link className={styles.link} to="/login">Ya tengo una cuenta</Link>

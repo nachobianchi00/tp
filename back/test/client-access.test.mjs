@@ -860,3 +860,33 @@ test('metadata: Cliente no elimina pedidos por cascada; Pedido.cliente es obliga
   assert.notEqual(orderRelation.deleteRule, 'set null')
 })
 
+test('GET individual de Cliente comprueba la cuenta una sola vez y conserva 200, 400 y 403', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie } = await authenticate()
+  const consultas = t.mock.method(em, 'count')
+  for (const [id, status] of [['7', 200], ['8', 403], ['999', 403], ['7otro', 400], ['0', 400]]) {
+    consultas.mock.resetCalls()
+    const response = await call(`/api/clientes/${id}`, { cookie: cookie.pair })
+    assert.equal(response.status, status)
+    assertSafe(response)
+    assert.equal(consultas.mock.callCount(), 1)
+    assert.deepEqual(consultas.mock.calls[0].arguments, [entities.Cliente, { id: 7 }])
+  }
+  assert.deepEqual(writes, { created: 0, assigned: 0, flushed: 0 })
+})
+
+test('GET individual de Admin comprueba la cuenta una sola vez y conserva acceso y 404', async t => {
+  const { call, authenticate } = await harness(t)
+  const { cookie } = await authenticate('admin')
+  const consultas = t.mock.method(em, 'count')
+  for (const [id, status] of [['7', 200], ['8', 200], ['999', 404]]) {
+    consultas.mock.resetCalls()
+    const response = await call(`/api/clientes/${id}`, { cookie: cookie.pair })
+    assert.equal(response.status, status)
+    assertSafe(response)
+    assert.equal(consultas.mock.callCount(), 1)
+    assert.deepEqual(consultas.mock.calls[0].arguments, [entities.Admin, { id: 7 }])
+  }
+  assert.deepEqual(writes, { created: 0, assigned: 0, flushed: 0 })
+})
+

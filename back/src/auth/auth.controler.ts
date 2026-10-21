@@ -5,15 +5,15 @@ import { clearSessionCookie } from '../shared/security/session.js'
 import { createSession, destroySession, getSessionIdentity } from './session.service.js'
 
 export async function login(req: Request, res: Response): Promise<void> {
-  let created = false
+  let sesionCreada = false
   try {
-    const identity = await createSession(req, req.body)
-    created = true
+    const identidad = await createSession(req, req.body)
+    sesionCreada = true
     // regenerate() quitó el token anónimo. Se guarda uno nuevo antes de responder.
-    const csrfToken = await getCsrfToken(req)
-    res.json({ message: 'Sesión iniciada', data: identity, csrfToken })
+    const tokenCsrf = await getCsrfToken(req)
+    res.json({ message: 'Sesión iniciada', data: identidad, csrfToken: tokenCsrf })
   } catch (error) {
-    if (created) {
+    if (sesionCreada) {
       try {
         await destroySession(req)
       } catch {
@@ -29,13 +29,13 @@ export async function login(req: Request, res: Response): Promise<void> {
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
-  const identity = await getSessionIdentity(req)
-  if (!identity) {
-    // Conserva la cookie de una sesión anónima; elimina la de una sesión destruida por vencimiento.
+  const identidad = await getSessionIdentity(req)
+  if (!identidad) {
+    // Conserva la cookie anónima; limpia la de una sesión vencida o de una cuenta eliminada.
     if (!req.session) clearSessionCookie(req, res)
     throw new ServiceError('No autenticado', 401)
   }
-  res.json({ data: identity })
+  res.json({ data: identidad })
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
@@ -57,16 +57,16 @@ export const authErrorHandler: ErrorRequestHandler = (error: unknown, _req, res,
     return
   }
   // Errores del parser JSON anterior al router también deben salir como JSON sin detalles internos.
-  const parseErrors: Record<string, { status: number; message: string }> = {
+  const erroresDeJson: Record<string, { status: number; message: string }> = {
     'entity.parse.failed': { status: 400, message: 'JSON inválido' },
     'entity.too.large': { status: 413, message: 'Solicitud demasiado grande' },
     'charset.unsupported': { status: 415, message: 'Codificación no admitida' },
     'encoding.unsupported': { status: 415, message: 'Codificación no admitida' },
   }
-  const parserError = isRecord(error) && typeof error.type === 'string'
-    && Object.hasOwn(parseErrors, error.type) ? parseErrors[error.type] : undefined
-  if (parserError) {
-    res.status(parserError.status).json({ message: parserError.message })
+  const errorDeJson = isRecord(error) && typeof error.type === 'string'
+    && Object.hasOwn(erroresDeJson, error.type) ? erroresDeJson[error.type] : undefined
+  if (errorDeJson) {
+    res.status(errorDeJson.status).json({ message: errorDeJson.message })
     return
   }
   res.status(500).json({ message: 'No se pudo completar la autenticación' })
