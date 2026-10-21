@@ -366,3 +366,77 @@ test('registrar un Cliente desde una sesión Admin no altera el login ni el logo
   assert.equal(await service.getCsrfToken(), anonymousToken);
   assert.equal(calls.filter(call => call.url === '/api/auth/login').length, 1);
 });
+
+test('baja: obtiene CSRF vigente, envía DELETE con cookie y el siguiente token se consulta', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ message: 'cliente deleted' }),
+    json({ csrfToken: renewedToken }));
+  await service.deleteCliente(7);
+  assert.equal(calls[0].url, '/api/auth/csrf');
+  assert.equal(calls[1].url, '/api/clientes/7');
+  assert.equal(calls[1].options.method, 'DELETE');
+  assert.equal(calls[1].options.credentials, 'include');
+  assert.equal(calls[1].options.headers['X-CSRF-Token'], anonymousToken);
+  assert.equal(calls[1].options.body, undefined);
+  assert.equal(await service.getCsrfToken(), renewedToken);
+});
+
+test('baja: consulta CSRF antes del DELETE aunque se haya consultado antes', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), json({ csrfToken: renewedToken }),
+    json({ message: 'cliente deleted' }));
+  await service.getCsrfToken();
+  await service.deleteCliente(7);
+  assert.equal(calls[2].options.headers['X-CSRF-Token'], renewedToken);
+});
+
+for (const id of [0, -1, 1.5, '7', Number.MAX_SAFE_INTEGER + 1, NaN]) {
+  test(`baja: ID inválido ${id} no envía solicitudes`, async () => {
+    const { service, calls } = simulated();
+    await assert.rejects(service.deleteCliente(id), error => error instanceof AuthError && error.kind === 'response');
+    assert.equal(calls.length, 0);
+  });
+}
+
+test('baja: 409 muestra conflicto, conserva la sesión y no reintenta el DELETE', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
+    json({ message: 'detalle interno que no debe mostrarse' }, 409), json({ data: { id: 7, tipo: 'cliente' } }));
+  await assert.rejects(service.deleteCliente(7), error => error.status === 409 && /pedidos/.test(error.message)
+    && !error.message.includes('detalle interno'));
+  assert.deepEqual(await service.me(), { id: 7, tipo: 'cliente' });
+  assert.equal(calls.filter(call => call.options.method === 'DELETE').length, 1);
+});
+
+for (const status of [400, 401, 403, 500]) {
+  test(`baja: ${status} no se interpreta como éxito ni revela mensajes internos`, async () => {
+    const { service, calls } = simulated(json({ csrfToken: anonymousToken }),
+      json({ message: 'SQL password secreto-ficticio' }, status), json({ csrfToken: renewedToken }));
+    await assert.rejects(service.deleteCliente(7), error => error instanceof AuthError && error.status === status
+      && !/SQL|password|secreto-ficticio/.test(error.message));
+    assert.equal(calls.length, 2, 'No repite escrituras automáticamente');
+    assert.equal(await service.getCsrfToken(), renewedToken);
+  });
+}
+
+test('baja: fallo de conexión al DELETE informa resultado incierto sin repetir escritura', async () => {
+  const { service, calls } = simulated(json({ csrfToken: anonymousToken }), new TypeError('fallo privado ficticio'));
+  await assert.rejects(service.deleteCliente(7), error => error.kind === 'network'
+    && /No se pudo confirmar/.test(error.message) && !error.message.includes('privado'));
+  assert.equal(calls.length, 2);
+});
+
+test('baja: fallo al preparar CSRF no envía DELETE', async () => {
+  const { service, calls } = simulated(json({ message: 'No disponible' }, 500));
+  await assert.rejects(service.deleteCliente(7), error => error.status === 500);
+  assert.equal(calls.length, 1);
+});
+
+for (const result of [{}, null, { message: 'otra operación' }]) {
+  test(`baja: rechaza confirmación inválida ${JSON.stringify(result)}`, async () => {
+    const { service } = simulated(json({ csrfToken: anonymousToken }), json(result));
+    await assert.rejects(service.deleteCliente(7), error => error.kind === 'response');
+  });
+}
+
+test('baja: rechaza un código exitoso diferente del contrato sin anunciar éxito', async () => {
+  const { service } = simulated(json({ csrfToken: anonymousToken }), json({ message: 'cliente deleted' }, 201));
+  await assert.rejects(service.deleteCliente(7), error => error.kind === 'response');
+});

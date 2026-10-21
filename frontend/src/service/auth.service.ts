@@ -32,7 +32,10 @@ function tokenFrom(value: unknown): string {
   return value;
 }
 
-function httpMessage(status: number, registration = false): string {
+function httpMessage(status: number, registration = false, esEliminacion = false): string {
+  if (esEliminacion && status === 409) return 'No podés eliminar tu cuenta porque tiene pedidos u otros registros asociados.';
+  if (esEliminacion && status === 401) return 'Tu sesión ya no está disponible. Volvé a iniciar sesión.';
+  if (esEliminacion && status >= 500) return 'No se pudo confirmar la eliminación. Comprobá tu sesión antes de reintentar.';
   if (status === 400) return registration
     ? 'Revisá los datos ingresados para crear la cuenta.'
     : 'Revisá el correo, la contraseña y el tipo de cuenta.';
@@ -47,16 +50,19 @@ export function createAuthService(fetcher: typeof fetch = (...args) => fetch(...
   let csrfToken: string | null = null;
 
   async function request(path: string, options: RequestInit = {}, expectedStatus?: number): Promise<unknown> {
+    const esEliminacion = options.method === 'DELETE' && path.startsWith('/api/clientes/');
     let response: Response;
     try {
       response = await fetcher(path, {
         ...options, credentials: 'include', cache: 'no-store',
       });
     } catch {
-      throw new AuthError('No se pudo conectar con el servidor. Verificá que esté disponible.', 'network');
+      throw new AuthError(esEliminacion
+        ? 'Se perdió la conexión. No se pudo confirmar la eliminación; comprobá tu sesión antes de reintentar.'
+        : 'No se pudo conectar con el servidor. Verificá que esté disponible.', 'network');
     }
     // No se muestran mensajes arbitrarios del servidor ni cuerpos de error HTML.
-    if (!response.ok) throw new AuthError(httpMessage(response.status, path === '/api/clientes'), 'http', response.status);
+    if (!response.ok) throw new AuthError(httpMessage(response.status, path === '/api/clientes', esEliminacion), 'http', response.status);
     if (expectedStatus !== undefined && response.status !== expectedStatus) {
       throw new AuthError('El servidor devolvió una respuesta inválida.', 'response');
     }
@@ -154,7 +160,24 @@ export function createAuthService(fetcher: typeof fetch = (...args) => fetch(...
     }
   }
 
-  return { getCsrfToken, login, registerCliente, me, logout };
+  async function deleteCliente(id: number): Promise<void> {
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new AuthError('La identidad de la cuenta no es válida.', 'response');
+    }
+    try {
+      const token = await getCsrfToken(true);
+      const resultado = await request(`/api/clientes/${id}`, {
+        method: 'DELETE', headers: { 'X-CSRF-Token': token },
+      }, 200);
+      if (!isRecord(resultado) || resultado.message !== 'cliente deleted') {
+        throw new AuthError('No se pudo confirmar la eliminación. Comprobá tu sesión.', 'response');
+      }
+    } finally {
+      csrfToken = null;
+    }
+  }
+
+  return { getCsrfToken, login, registerCliente, me, logout, deleteCliente };
 }
 
 export const authService = createAuthService();

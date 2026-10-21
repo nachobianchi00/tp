@@ -32,6 +32,9 @@ function matches(record, Entity, criteria) {
 }
 // Solo este doble almacena las cuentas; metadataOrm se usa exclusivamente para la serialización real.
 const em = {
+  async count(Entity, criteria) {
+    return records.filter(record => record instanceof Entity && record.id === criteria.id).length
+  },
   async find(Entity, criteria) {
     queries.push({ operation: 'find', Entity, criteria })
     return records.filter(record => matches(record, Entity, criteria))

@@ -1,16 +1,8 @@
 import type { ErrorRequestHandler, Request, Response } from 'express'
 import { ServiceError, isRecord } from '../shared/service-errors.js'
 import { getCsrfToken } from '../shared/security/csrf.js'
-import { SESSION_COOKIE_NAME } from '../shared/security/session.js'
+import { clearSessionCookie } from '../shared/security/session.js'
 import { createSession, destroySession, getSessionIdentity } from './session.service.js'
-
-function clearSessionCookie(req: Request, res: Response): void {
-  // Mismo nombre y Path que la configuración de sesiones; sin maxAge al borrar.
-  res.clearCookie(SESSION_COOKIE_NAME, {
-    path: '/api', httpOnly: true, sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production' || req.secure,
-  })
-}
 
 export async function login(req: Request, res: Response): Promise<void> {
   let created = false

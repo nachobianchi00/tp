@@ -2,6 +2,8 @@ import { Request, Response } from 'express'
 import { parseRouteId } from '../shared/route-params.js'
 import { sendServiceError } from '../shared/service-errors.js'
 import { createCliente, deleteCliente, findAllClientes, findCliente, updateCliente } from './cliente.service.js'
+import { destroySession } from '../auth/session.service.js'
+import { clearSessionCookie } from '../shared/security/session.js'
 
 async function findAll(_req: Request, res: Response) {
   try {
@@ -41,6 +43,12 @@ async function update(req: Request, res: Response) {
 async function remove(req: Request, res: Response) {
   try {
     await deleteCliente(parseRouteId(req.params.id))
+    // Solo después de confirmar el borrado: un 409 conserva la sesión y la cookie.
+    try {
+      await destroySession(req)
+    } finally {
+      clearSessionCookie(req, res)
+    }
     res.json({ message: 'cliente deleted' })
   } catch (error: unknown) {
     sendServiceError(res, error)

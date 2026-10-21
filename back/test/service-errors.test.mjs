@@ -66,6 +66,9 @@ before(() => {
 })
 
 before(async () => {
+  serviceMocks.push(mock.module(new URL('auth/session.service.js', compiledDir).href, {
+    exports: { async destroySession() { throw new Error('No debe cerrar sesión si el borrado falla') } },
+  }))
   const load = path => import(new URL(path, compiledDir).href)
   ;({ ServiceError, sendServiceError } = await load('shared/service-errors.js'))
   ;({ parseRouteId } = await load('shared/route-params.js'))

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import type { ErrorRequestHandler, RequestHandler } from 'express'
-import { findAll, findOne, add, update } from './cliente.controler.js'
+import { findAll, findOne, add, update, remove } from './cliente.controler.js'
 import { requireAuthentication, requireAccountType, requireAccountOwner } from '../shared/security/authorization.js'
 import { createCsrfProtection } from '../shared/security/csrf.js'
 import { ServiceError, isRecord } from '../shared/service-errors.js'
@@ -26,10 +26,7 @@ export function createClienteRouter(options: { allowedOrigins: readonly string[]
   clienteRouter.get('/:id', requireAuthentication, requireOwnerOrAdmin, findOne)
   // No hay excepción para Admin al modificar una cuenta de Cliente.
   clienteRouter.put('/:id', requireClienteOwner, protectCsrf, update)
-  clienteRouter.delete('/:id', requireAuthentication, protectCsrf, (_req, res) => {
-    // No se invoca remove ni deleteCliente hasta acordar eliminación y revocación de sesiones.
-    res.status(403).json({ message: 'La eliminación de clientes está temporalmente bloqueada' })
-  })
+  clienteRouter.delete('/:id', requireClienteOwner, protectCsrf, remove)
   clienteRouter.use(clienteAccessErrorHandler)
   return clienteRouter
 }

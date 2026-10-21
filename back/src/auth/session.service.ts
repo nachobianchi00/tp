@@ -4,6 +4,9 @@ import type { AuthIdentity } from './auth.service.js'
 import { ServiceError } from '../shared/service-errors.js'
 import { SESSION_TTL_MS } from '../shared/security/session.js'
 import type {} from '../shared/security/session.types.js'
+import { orm } from '../shared/db/orm.js'
+import { Cliente } from '../cliente/cliente.entity.js'
+import { Admin } from '../admin/admin.entity.js'
 
 type SessionRequest = Pick<Request, 'session'>
 type RequestSession = Request['session']
@@ -83,7 +86,21 @@ export async function getSessionIdentity(request: SessionRequest): Promise<AuthI
     return null
   }
 
-  // No se consulta MySQL ni se devuelve el objeto completo de la sesión.
+  let cuentaExiste: boolean
+  try {
+    // count consulta el almacenamiento: no reutiliza una entidad de la identity map.
+    cuentaExiste = (identity.tipo === 'cliente'
+      ? await orm.em.count(Cliente, { id: identity.id })
+      : await orm.em.count(Admin, { id: identity.id })) > 0
+  } catch {
+    // Sin una comprobación vigente no se concede acceso ni se supone un logout exitoso.
+    throw new ServiceError('No se pudo verificar la cuenta de la sesión', 500)
+  }
+  if (!cuentaExiste) {
+    await destroySession(request)
+    return null
+  }
+
   return { id: identity.id, tipo: identity.tipo }
 }
 

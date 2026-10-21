@@ -26,6 +26,11 @@ let record, assignments, flushes, queries, serviceCalls
 // Un único registro y su relación simulados. La asignación permite cualquier clave:
 // las restricciones deben cumplirse en el servicio real, antes de llegar a este doble.
 const em = {
+  // Las sesiones de estas pruebas pertenecen a cuentas ficticias de ID 7.
+  async count(Entity, criteria) {
+    assert.ok(['Cliente', 'Admin'].includes(Entity.name))
+    return criteria.id === 7 ? 1 : 0
+  },
   async findOne(Entity, criteria) {
     assert.equal(Entity, MetodoEnvio)
     queries.push({ ...criteria })

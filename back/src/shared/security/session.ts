@@ -1,9 +1,17 @@
 import session from 'express-session'
-import type { RequestHandler } from 'express'
+import type { Request, RequestHandler, Response } from 'express'
 import type {} from './session.types.js'
 
 export const SESSION_COOKIE_NAME = 'minigo.sid'
 export const SESSION_TTL_MS = 30 * 60 * 1000
+
+/** Mismo nombre, Path y atributos que la cookie original; sin maxAge al eliminar. */
+export function clearSessionCookie(req: Request, res: Response): void {
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    path: '/api', httpOnly: true, sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production' || req.secure,
+  })
+}
 
 /** Lee la configuración al invocarse; no importa el ORM ni inicia un servidor. */
 export function createSessionOptions(store?: session.Store): session.SessionOptions {

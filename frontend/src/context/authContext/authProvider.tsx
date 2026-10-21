@@ -72,8 +72,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await runOperation(() => authService.me());
   }
 
+  function deleteOwnAccount(): Promise<boolean> {
+    if (identity?.tipo !== 'cliente') return Promise.resolve(false);
+    // El ID procede de /me o login; no es un argumento editable del formulario.
+    const id = identity.id;
+    return runOperation(async () => {
+      await authService.deleteCliente(id);
+      return null;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ identity, checking, submitting, error, login, logout, refreshSession }}>
+    <AuthContext.Provider value={{ identity, checking, submitting, error, login, logout, refreshSession, deleteOwnAccount }}>
       {children}
     </AuthContext.Provider>
   );

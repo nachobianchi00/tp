@@ -26,6 +26,9 @@ let createAuthRouter, authErrorHandler, createSessionMiddleware, SESSION_TTL_MS,
 let accounts, lookups
 
 const em = {
+  async count(Entity, criteria) {
+    return accounts.filter(account => account instanceof Entity && account.id === criteria.id).length
+  },
   async findOne(entity, criteria) {
     lookups.push({ entity, criteria })
     return accounts.find(account => account instanceof entity && account.mail === criteria.mail) ?? null
