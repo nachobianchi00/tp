@@ -1,12 +1,22 @@
 // src/component/header/component/navegator.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { products } from '../../../mock/products';
+import { productoService } from '../../../service/producto.service';
+import type { ProductType } from '../../../type/productType';
 import styles from '../header.module.css';
 
 export default function Navegator() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [products, setProducts] = useState<ProductType[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    productoService.getAll()
+      .then((list) => { if (!cancelled) setProducts(list); })
+      .catch(() => { /* Sin productos cargados, el buscador simplemente no sugiere nada. */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const suggestions = search.trim() === ''
     ? []

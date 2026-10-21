@@ -1,13 +1,21 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { products } from '../../mock/products';
+import { categoriaService } from '../../service/categoria.service';
+import type { CategoryType } from '../../type/categoryType';
 import logo from '../../asset/image/logo.webp';
 import styles from './footer.module.css';
 
-const categories = Array.from(
-  new Map(products.map((p) => [p.category.id, p.category])).values()
-);
-
 export default function BarTopFooter() {
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    categoriaService.getAll()
+      .then((list) => { if (!cancelled) setCategories(list); })
+      .catch(() => { /* Las categorías del footer son opcionales: si fallan, no se muestran. */ });
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className={styles.barraSuperior}>
       <Link to="/" className={styles.logoLink}>

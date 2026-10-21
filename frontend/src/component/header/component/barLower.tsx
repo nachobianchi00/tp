@@ -15,7 +15,7 @@ export default function BarLower() {
       </NavLink>
 
       <NavLink
-        to="/productos"
+        to="/catalogo"
         className={({ isActive }) =>
           isActive ? `${styles.referenciaLink} ${styles.referenciaActiva}` : styles.referenciaLink
         }
