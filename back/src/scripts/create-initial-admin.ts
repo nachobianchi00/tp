@@ -23,21 +23,24 @@ try {
   if (!Number.isSafeInteger(dni) || dni <= 0) {
     throw new Error('INITIAL_ADMIN_DNI must be a positive integer')
   }
-  if (await orm.em.count(Admin) > 0) {
+
+  const em = orm.em.fork()
+
+  if (await em.count(Admin) > 0) {
     throw new Error('An admin already exists; this bootstrap can only create the first admin')
   }
-  if (await orm.em.findOne(Cliente, { mail })) {
+  if (await em.findOne(Cliente, { mail })) {
     throw new Error('An account with INITIAL_ADMIN_MAIL already exists')
   }
 
-  const admin = orm.em.create(Admin, {
+  const admin = em.create(Admin, {
     nombre,
     apellido,
     dni,
     mail,
     password: await hashPassword(password),
   })
-  await orm.em.flush()
+  await em.flush()
   console.log(`Initial admin created with id ${admin.id}`)
 } finally {
   await orm.close(true)
