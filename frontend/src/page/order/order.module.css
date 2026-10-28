@@ -176,3 +176,58 @@
   font-size: 0.9rem;
   color: var(--color-text-light);
 }
+
+.cancelar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancelarBoton {
+  border: 1px solid #9f2020;
+  background: var(--color-secondary);
+  color: #9f2020;
+  border-radius: 24px;
+  padding: 0.65rem 1.4rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelarBoton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.errorCancelar {
+  margin: 0;
+  color: #9f2020;
+}
+
+
+.accionesPedido {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.whatsappBoton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #25d366;
+  background: #25d366;
+  color: #fff;
+  border-radius: 24px;
+  padding: 0.65rem 1.4rem;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.whatsappBoton:hover {
+  background: #1ebe5b;
+  border-color: #1ebe5b;
+}

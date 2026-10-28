@@ -20,7 +20,7 @@ export default function ProductGrid({ products, emptyMessage }: ProductGridProps
           <img src={productImage(p.nombre)} alt={p.nombre} className={styles.imagen} />
           <p className={styles.nombre}>{p.nombre}</p>
           <p className={styles.precio}>${p.precio}</p>
-          <p className={styles.stock}>Stock: {p.cantidad}</p>
+          <p className={styles.stock}>{p.cantidad === 0 ? 'Sin stock' : `Stock: ${p.cantidad}`}</p>
         </Link>
       ))}
     </div>

@@ -32,7 +32,7 @@ export default function Resumen({ entregaData, payData }: ResumenProps) {
     try {
       const id = await createOrder(items, entregaData, payData);
       clearCart();
-      navigate(`/pedido/${id}`, { replace: true });
+      navigate(`/pedido/${id}`, { replace: true, state: { nuevo: true } });
     } catch (e) {
       if (e instanceof HttpError && e.status === 401) setError('Tu sesión expiró. Volvé a iniciar sesión.');
       else if (e instanceof HttpError && e.status === 409) setError('Algún producto ya no tiene stock suficiente. Revisá tu carrito.');

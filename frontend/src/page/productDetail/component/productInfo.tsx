@@ -12,6 +12,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
   const [showAdvice, setShowAdvice] = useState(false);
   const { addToCart } = useCart();
+  const sinStock = product.cantidad === 0;
 
   useEffect(() => {
     if (!showAdvice) return;
@@ -28,6 +29,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   }
 
   function handleAddToCart() {
+    if (sinStock) return;
     addToCart(product, quantity);
     setShowAdvice(true);
   }
@@ -42,16 +44,16 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className={styles.info}>
           <h2 className={styles.nombre}>{product.nombre}</h2>
           <p className={styles.precio}>${product.precio}</p>
-          <p className={styles.stock}>Stock disponible: {product.cantidad}</p>
+          <p className={styles.stock}>{sinStock ? 'Sin stock' : `Stock disponible: ${product.cantidad}`}</p>
 
           <div className={styles.selectorCantidad}>
-            <button onClick={handleDecrease} className={styles.botonCantidad}>−</button>
+            <button onClick={handleDecrease} className={styles.botonCantidad} disabled={sinStock}>−</button>
             <span className={styles.cantidad}>{quantity}</span>
-            <button onClick={handleIncrease} className={styles.botonCantidad}>+</button>
+            <button onClick={handleIncrease} className={styles.botonCantidad} disabled={sinStock}>+</button>
           </div>
 
-          <button onClick={handleAddToCart} className={styles.botonAgregar}>
-            Agregar al carrito
+          <button onClick={handleAddToCart} className={styles.botonAgregar} disabled={sinStock}>
+            {sinStock ? 'Sin stock' : 'Agregar al carrito'}
           </button>
         </div>
       </div>

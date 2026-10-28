@@ -5,8 +5,11 @@ import { HttpError } from '../../service/http';
 import { authService } from '../../service/auth.service';
 import type { AuthIdentity, LoginCredentials } from '../../type/authType';
 
+class WrongAccountType extends Error {}
+
 function errorMessage(error: unknown): string {
-  if (error instanceof HttpError && (error.status === 400 || error.status === 401)) {
+  if (error instanceof WrongAccountType
+    || (error instanceof HttpError && (error.status === 400 || error.status === 401))) {
     return 'Correo o contraseña incorrectos.';
   }
   return 'Ocurrió un error. Intentá de nuevo.';
@@ -57,7 +60,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function login(credentials: LoginCredentials): Promise<boolean> {
-    return runOperation(() => authService.login(credentials));
+    return runOperation(async () => {
+      const identity = await authService.login(credentials);
+      // El backend decide el tipo por el mail. Si no coincide con la pantalla usada, se cierra esa sesión.
+      if (identity.tipo !== credentials.tipo) {
+        await authService.logout().catch(() => {});
+        throw new WrongAccountType();
+      }
+      return identity;
+    });
   }
 
   function logout(): Promise<boolean> {

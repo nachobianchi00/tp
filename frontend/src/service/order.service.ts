@@ -27,3 +27,14 @@ export async function getOrder(id: number): Promise<PedidoType> {
     detallePedido: data.detallePedido.map((d) => ({ ...d, precioUnitario: Number(d.precioUnitario) })),
   };
 }
+
+export async function getMyOrders(): Promise<PedidoType[]> {
+  const { data } = await http<{ data: PedidoType[] }>('/pedidos');
+  return data
+    .map((p) => ({ ...p, total: Number(p.total) }))
+    .sort((a, b) => b.id - a.id); // los más nuevos primero
+}
+
+export async function cancelOrder(id: number): Promise<void> {
+  await http(`/pedidos/${id}/cancelar`, { method: 'POST' });
+}

@@ -13,7 +13,7 @@ export default function Login({ tipo }: { tipo: AccountType }) {
   const disabled = checking || submitting;
 
   // Si venía redirigido (por ejemplo desde /checkout), vuelve ahí; si no, al inicio.
-  const from = location.state?.from?.pathname ?? '/';
+  const from = location.state?.from?.pathname ?? (tipo === 'admin' ? '/admin' : '/');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,11 +22,11 @@ export default function Login({ tipo }: { tipo: AccountType }) {
   }
 
   // Con sesión iniciada no tiene sentido ver el login (también corre justo después de loguearse).
-  if (identity) return <Navigate to={from} replace />;
+  if (identity?.tipo === tipo) return <Navigate to={from} replace />;
 
   return (
     <section className={styles.container}>
-      <h1>Iniciar sesión</h1>
+      <h1>{tipo === 'admin' ? 'Acceso administradores' : 'Iniciar sesión'}</h1>
       {location.state?.from && <p>Iniciá sesión para continuar.</p>}
       {error && <p className={styles.error} role="alert">{error}</p>}
 

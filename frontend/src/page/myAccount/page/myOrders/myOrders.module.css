@@ -1,0 +1,70 @@
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-secondary);
+}
+
+.numero {
+  display: flex;
+  flex-direction: column;
+}
+
+.fecha {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+.total {
+  font-weight: 600;
+}
+
+.estado {
+  padding: 0.15rem 0.8rem;
+  border-radius: 12px;
+  background: var(--color-bg-light);
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.pendiente {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.confirmado,
+.enviado {
+  background: #e0f0fa;
+  color: var(--color-primary);
+}
+
+.entregado {
+  background: #e6f4ea;
+  color: #1e6b34;
+}
+
+.cancelado {
+  background: #fbe4e4;
+  color: #9f2020;
+}
+
+@media (max-width: 640px) {
+  .fila {
+    grid-template-columns: 1fr auto;
+  }
+}
