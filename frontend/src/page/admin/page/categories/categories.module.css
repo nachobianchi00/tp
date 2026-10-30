@@ -1,0 +1,145 @@
+.title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.list {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.iconButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.iconButton:hover:not(:disabled),
+.iconButton:focus-visible {
+  background: #e0f0fa;
+}
+
+.deleteButton {
+  color: #9f2020;
+}
+
+.deleteButton:hover:not(:disabled),
+.deleteButton:focus-visible {
+  background: #fbe4e4;
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+form.compactForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fbfbfb;
+}
+
+.compactForm h2,
+.compactForm label {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.compactForm h2 {
+  font-size: 1.1rem;
+}
+
+form.compactForm input {
+  flex: 1 1 12rem;
+  width: auto;
+  min-width: 0;
+}
+
+.compactForm button {
+  justify-content: center;
+  border-radius: 8px;
+}
+
+form.compactForm select {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.categoryInfo {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.categoryDescription {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+@media (min-width: 641px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
