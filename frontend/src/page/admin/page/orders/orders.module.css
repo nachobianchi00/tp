@@ -1,8 +1,146 @@
 .title {
-  margin: 0 0 16px;
-  font-size: 24px;
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
 }
 
 .empty {
-  color: #666;
+  color: var(--color-text-light);
+}
+
+.error {
+  color: #9f2020;
+}
+
+/* ---------- Filtros ---------- */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.campo input,
+.campo select {
+  min-width: 12rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.limpiar {
+  padding: 0.5rem 0.25rem;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---------- Lista ---------- */
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 5.5rem 7rem auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.numero,
+.cliente {
+  display: flex;
+  flex-direction: column;
+}
+
+.fecha {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+.total {
+  font-weight: 600;
+  text-align: right;
+}
+
+.estado {
+  padding: 0.15rem 0.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.pendiente {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.confirmado {
+  background: #e0f0fa;
+  color: var(--color-primary);
+}
+
+.entregado {
+  background: #e6f4ea;
+  color: #1e6b34;
+}
+
+.cancelado {
+  background: #fbe4e4;
+  color: #9f2020;
+}
+
+.ver {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ver:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .fila {
+    grid-template-columns: 1fr auto;
+  }
 }

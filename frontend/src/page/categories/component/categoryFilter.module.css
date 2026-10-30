@@ -46,14 +46,23 @@
   border-left: 2px solid var(--color-border);
 }
 
-.subLink {
+.subItem {
   display: block;
+  width: 100%;
+  text-align: left;
   padding: 0.25rem 0;
+  border: none;
+  background: none;
   font-size: 0.82rem;
   color: var(--color-text-light);
-  text-decoration: none;
+  cursor: pointer;
 }
 
-.subLink:hover {
+.subItem:hover {
   color: var(--color-primary);
+}
+
+.subItemActivo {
+  color: var(--color-primary);
+  font-weight: 700;
 }

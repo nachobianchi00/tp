@@ -5,7 +5,7 @@ export interface ProductType {
   nombre: string;
   descripcion: string;
   precio: number;
-  cantidad: number; // stock disponible
+  cantidad: number; 
   estado: boolean;
   categorias: CategoryType[];
 }

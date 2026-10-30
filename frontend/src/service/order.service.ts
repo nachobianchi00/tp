@@ -38,3 +38,17 @@ export async function getMyOrders(): Promise<PedidoType[]> {
 export async function cancelOrder(id: number): Promise<void> {
   await http(`/pedidos/${id}/cancelar`, { method: 'POST' });
 }
+
+export async function getAllOrders(): Promise<PedidoType[]> {
+  return getMyOrders();
+}
+
+export type OrderAction = 'confirmar' | 'cancelar' | 'entregar';
+
+export async function changeOrderState(id: number, action: OrderAction): Promise<void> {
+  await http(`/pedidos/${id}/${action}`, { method: 'POST' });
+}
+
+export async function deleteOrder(id: number): Promise<void> {
+  await http(`/pedidos/${id}`, { method: 'DELETE' });
+}

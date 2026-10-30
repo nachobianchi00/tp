@@ -1,0 +1,156 @@
+.volver {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.volver:hover {
+  text-decoration: underline;
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.fecha {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.estado {
+  padding: 0.2rem 0.9rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.pendiente {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.confirmado{
+  background: #e0f0fa;
+  color: var(--color-primary);
+}
+
+.entregado {
+  background: #e6f4ea;
+  color: #1e6b34;
+}
+
+.cancelado {
+  background: #fbe4e4;
+  color: #9f2020;
+}
+
+/* ---------- Tarjetas ---------- */
+.card {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.subtitulo {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.datos dt {
+  color: var(--color-text-light);
+}
+
+.datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Productos y totales ---------- */
+.productos {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.producto {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.totales {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.totales dd {
+  margin: 0;
+  text-align: right;
+}
+
+.total {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* ---------- Acciones ---------- */
+.error {
+  color: #9f2020;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.boton {
+  padding: 0.55rem 1.2rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.peligro {
+  background: #fff;
+  border-color: #9f2020;
+  color: #9f2020;
+}

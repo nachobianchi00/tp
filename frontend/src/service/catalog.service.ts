@@ -6,12 +6,24 @@ import type { PayMethod } from '../type/payMethod';
 
 const list = <T>(path: string) => http<{ data: T[] }>(path).then((r) => r.data);
 const active = <T extends { estado: boolean }>(items: T[]) => items.filter((i) => i.estado);
-const toCategory = ({ id, nombre }: CategoryType): CategoryType => ({ id, nombre });
+
+// El backend manda la categoría padre como id (o como objeto, o null si no tiene).
+interface RawCategory {
+  id: number;
+  nombre: string;
+  categoriaPadre?: number | { id: number } | null;
+}
+
+const toCategory = ({ id, nombre, categoriaPadre }: RawCategory): CategoryType => ({
+  id,
+  nombre,
+  padreId: typeof categoriaPadre === 'object' ? (categoriaPadre?.id ?? null) : (categoriaPadre ?? null),
+});
 
 export async function loadCatalog() {
   const [products, categories, deliveryMethods, payMethods] = await Promise.all([
     list<ProductType>('/productos'),
-    list<CategoryType>('/categorias'),
+    list<RawCategory>('/categorias'),
     list<DeliveryMethod>('/metodos-envio'),
     list<PayMethod>('/metodos-pago'),
   ]);

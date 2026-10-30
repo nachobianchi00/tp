@@ -15,10 +15,16 @@ export default function Categories() {
   const selectedId = Number(searchParams.get('categoria')) || null;
   const selectedCategory = categories.find((c) => c.id === selectedId) ?? null;
   const query = searchParams.get('buscar')?.trim() ?? '';
+  const parentCategory = categories.find((c) => c.id === selectedCategory?.padreId) ?? null;
+
+  // Una categoría principal también muestra los productos de sus subcategorías
+  const selectedIds = selectedCategory
+    ? [selectedCategory.id, ...categories.filter((c) => c.padreId === selectedCategory.id).map((c) => c.id)]
+    : [];
 
   // filter ya devuelve un array nuevo, así que sort no modifica la lista del contexto
   const visibleProducts = products
-    .filter((p) => !selectedCategory || p.categorias.some((c) => c.id === selectedCategory.id))
+    .filter((p) => !selectedCategory || p.categorias.some((c) => selectedIds.includes(c.id)))
     .filter((p) => query === '' || normalize(p.nombre).includes(normalize(query)))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
@@ -44,6 +50,14 @@ export default function Categories() {
     <div className={styles.container}>
       <p className={styles.breadcrumb}>
         <Link to="/categorias" className={styles.breadcrumbLink}>Categorías</Link>
+        {parentCategory && (
+          <>
+            {' > '}
+            <Link to={`/categorias?categoria=${parentCategory.id}`} className={styles.breadcrumbLink}>
+              {parentCategory.nombre}
+            </Link>
+          </>
+        )}
         {' > '}
         {title}
       </p>
@@ -51,7 +65,6 @@ export default function Categories() {
       <div className={styles.layout}>
         <CategoryFilter
           categories={categories}
-          products={products}
           selectedId={selectedCategory?.id ?? null}
           onSelect={handleSelect}
         />

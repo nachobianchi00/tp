@@ -1,21 +1,19 @@
-import { Link } from 'react-router-dom';
 import type { CategoryType } from '../../../type/categoryType';
-import type { ProductType } from '../../../type/productType';
 import styles from './categoryFilter.module.css';
 
 interface CategoryFilterProps {
   categories: CategoryType[];
-  products: ProductType[];
   selectedId: number | null;
   onSelect: (categoryId: number | null) => void;
 }
 
-export default function CategoryFilter({
-  categories,
-  products,
-  selectedId,
-  onSelect,
-}: CategoryFilterProps) {
+export default function CategoryFilter({ categories, selectedId, onSelect }: CategoryFilterProps) {
+  const mains = categories.filter((c) => c.padreId === null);
+  const selected = categories.find((c) => c.id === selectedId);
+
+  // La categoría "abierta" es la elegida o, si se eligió una subcategoría, su categoría madre
+  const openId = selected?.padreId ?? selected?.id ?? null;
+
   return (
     <aside className={styles.container}>
       <h2 className={styles.titulo}>Filtro</h2>
@@ -30,32 +28,34 @@ export default function CategoryFilter({
           </button>
         </li>
 
-        {categories.map((category) => (
-          <li key={category.id}>
-            <button
-              onClick={() => onSelect(category.id)}
-              className={
-                selectedId === category.id ? `${styles.item} ${styles.itemActivo}` : styles.item
-              }
-            >
-              {category.nombre}
-            </button>
+        {mains.map((category) => {
+          const subs = categories.filter((c) => c.padreId === category.id);
+          return (
+            <li key={category.id}>
+              <button
+                onClick={() => onSelect(category.id)}
+                className={openId === category.id ? `${styles.item} ${styles.itemActivo}` : styles.item}
+              >
+                {category.nombre}
+              </button>
 
-            {selectedId === category.id && (
-              <ul className={styles.sublista}>
-                {products
-                  .filter((p) => p.categorias.some((c) => c.id === category.id))
-                  .map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/producto/${p.id}`} className={styles.subLink}>
-                        {p.nombre}
-                      </Link>
+              {openId === category.id && subs.length > 0 && (
+                <ul className={styles.sublista}>
+                  {subs.map((sub) => (
+                    <li key={sub.id}>
+                      <button
+                        onClick={() => onSelect(sub.id)}
+                        className={selectedId === sub.id ? `${styles.subItem} ${styles.subItemActivo}` : styles.subItem}
+                      >
+                        {sub.nombre}
+                      </button>
                     </li>
                   ))}
-              </ul>
-            )}
-          </li>
-        ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </aside>
   );
