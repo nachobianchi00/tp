@@ -25,6 +25,7 @@ import AdminLayout from './page/admin/adminLayout';
 import Admin from './page/admin/admin';
 import Orders from './page/admin/page/orders/orders';
 import OrderDetail from './page/admin/page/orders/orderDetail';
+import AdminCategories from './page/admin/page/categories/categori';
 
 // Layout de la tienda: Header + contenido + Footer. El admin NO pasa por acá.
 function ClientLayout() {
@@ -77,6 +78,7 @@ function App() {
                 <Route index element={<Navigate to="pedidos" replace />} />
                 <Route path="pedidos" element={<Orders />} />
                 <Route path="pedidos/:id" element={<OrderDetail />} />
+                <Route path="categorias" element={<AdminCategories />} />
               </Route>
             </Route>
           </Route>
