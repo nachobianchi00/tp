@@ -11,3 +11,12 @@
 
   --gradient-header: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
 }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+}

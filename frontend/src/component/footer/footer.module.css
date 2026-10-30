@@ -2,17 +2,19 @@
    FOOTER — contenedor general
    ============================================ */
 .footer {
-  margin-top: 3rem;
+  margin-top: 2rem;
 }
 
 /* ============================================
-   BAR TOP — logo + categorías/páginas (fondo claro)
+   BAR TOP — logo + categorías/páginas (mobile-first)
+   Celular: todo apilado en una columna.
    ============================================ */
 .barraSuperior {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 3rem;
-  padding: 2rem 2rem;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem;
   background: var(--color-bg-light);
   border-top: 1px solid var(--color-border);
 }
@@ -22,14 +24,14 @@
 }
 
 .logo {
-  height: 170px;
+  height: 100px;
   width: auto;
 }
 
 .columnas {
   display: flex;
   flex-wrap: wrap;
-  gap: 4rem;
+  gap: 1.5rem 2.5rem;
 }
 
 .columna {
@@ -68,9 +70,10 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.25rem 2rem;
+  padding: 1rem;
   background: var(--color-primary);
   color: var(--color-secondary);
+  text-align: center;
 }
 
 .redes {
@@ -95,4 +98,27 @@
   font-size: 0.75rem;
   margin: 0;
   opacity: 0.8;
+}
+
+/* ============================================
+   MD — tablet (≥ 768px)
+   ============================================ */
+@media (min-width: 768px) {
+  .footer { margin-top: 3rem; }
+  .barraSuperior {
+    flex-direction: row;
+    gap: 3rem;
+    padding: 2rem;
+  }
+  .logo { height: 140px; }
+  .columnas { gap: 3rem; }
+  .barraInferior { padding: 1.25rem 2rem; }
+}
+
+/* ============================================
+   LG — escritorio (≥ 1024px)
+   ============================================ */
+@media (min-width: 1024px) {
+  .logo { height: 170px; }
+  .columnas { gap: 4rem; }
 }
