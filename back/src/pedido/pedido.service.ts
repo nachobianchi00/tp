@@ -271,3 +271,21 @@ export async function deletePedido(id: number) {
     await transactionalEm.flush()
   })
 }
+
+// Marca un pedido confirmado como entregado.
+export async function entregarPedido(id: number) {
+  return em.transactional(async transactionalEm => {
+    const pedido = await transactionalEm.findOne(
+      Pedido,
+      { id },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    )
+    if (!pedido) throw new AppError('Pedido not found', 404)
+    if (pedido.estado !== EstadoPedido.CONFIRMADO) {
+      throw new AppError('Only confirmed orders can be marked as delivered', 409)
+    }
+    pedido.estado = EstadoPedido.ENTREGADO
+    await transactionalEm.flush()
+    return pedido
+  })
+}

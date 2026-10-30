@@ -5,6 +5,7 @@ import {
   confirmarPedido,
   createPedido,
   deletePedido,
+  entregarPedido,
   findAllPedidos,
   findPedido,
   updatePedido,
@@ -58,4 +59,11 @@ async function cancel(req: Request, res: Response) {
   })
 }
 
-export { findAll, findOne, add, update, remove, confirm, cancel }
+async function deliver(req: Request, res: Response) {
+  res.json({
+    message: 'pedido marked as delivered',
+    data: await entregarPedido(parseRouteId(req.params.id)),
+  })
+}
+
+export { findAll, findOne, add, update, remove, confirm, cancel, deliver }
