@@ -69,6 +69,26 @@ export default function AdminSidebar() {
         Métodos de pago
       </NavLink>
 
+      <NavLink to="/admin/productos" className={itemClass}>
+        <svg
+          className={styles.icono}
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+          <circle cx="7" cy="7" r="1" fill="currentColor" />
+        </svg>
+        Productos
+      </NavLink>
+      
         <button type="button" className={styles.item} onClick={handleLogout}>
           <svg className={styles.icono} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
