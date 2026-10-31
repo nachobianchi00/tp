@@ -1,4 +1,4 @@
-/* CONTENEDOR GENERAL */
+/* CONTENEDOR GENERAL (mobile-first) */
 .container {
   max-width: 500px;
 }
@@ -8,15 +8,16 @@
   margin-bottom: 1rem;
 }
 
-/* BOTONES DE MÉTODO (Envío / Retira) */
+/* BOTONES DE MÉTODO (Envío / Retira): si no entran en fila, pasan a otra */
 .opciones {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
 .opcionBoton {
-  flex: 1;
+  flex: 1 1 140px;
   padding: 0.9rem;
   border: 1.5px solid var(--color-border);
   border-radius: 10px;
@@ -54,6 +55,7 @@
 .direccionTexto {
   font-weight: 600;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .envioInfo {
@@ -69,7 +71,7 @@
   margin-bottom: 1rem;
 }
 
-/*  OBSERVACIÓN (opcional, para ambos métodos) */
+/* OBSERVACIÓN (opcional, para ambos métodos) */
 .observacionBox {
   display: flex;
   flex-direction: column;
@@ -82,10 +84,11 @@
 }
 
 .observacionInput {
+  width: 100%;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.6rem;
-  font-size: 0.9rem;
+  font-size: 1rem;           /* 16px evita el zoom automático de iOS al enfocar */
   font-family: inherit;
   resize: vertical;
   min-height: 60px;
@@ -94,4 +97,9 @@
 .observacionInput:focus {
   outline: none;
   border-color: var(--color-primary-light);
+}
+
+@media (min-width: 768px) {
+  .opciones { gap: 1rem; }
+  .observacionInput { font-size: 0.9rem; }
 }

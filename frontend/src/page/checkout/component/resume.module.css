@@ -1,7 +1,7 @@
 .container {
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .titulo {
@@ -21,8 +21,10 @@
 .itemFila {
   display: flex;
   justify-content: space-between;
+  gap: 0.75rem;
   font-size: 0.85rem;
   color: var(--color-text-light);
+  overflow-wrap: anywhere;
 }
 
 .detalleFila {
@@ -51,7 +53,7 @@
 
 .botonConfirmar {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.85rem;
   border: none;
   border-radius: 24px;
   background: var(--color-primary);
@@ -71,4 +73,9 @@
   color: var(--color-text-light);
   text-align: center;
   margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .container { padding: 1.5rem; }
+  .botonConfirmar { padding: 0.75rem; }
 }
