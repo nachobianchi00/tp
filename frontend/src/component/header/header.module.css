@@ -3,12 +3,16 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* BAR TOP */
+/* ============================================
+   BAR TOP (mobile-first)
+   Celular: logo y acciones arriba, buscador en una segunda fila.
+   ============================================ */
 .barraSuperior {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: var(--color-secondary);
   border-bottom: 1px solid var(--color-border);
 }
@@ -20,16 +24,16 @@
 }
 
 .logo {
-  height: 120px;
+  height: 56px;
   width: auto;
 }
 
 /* NAVEGATOR */
 .buscadorWrapper {
   position: relative;
-  flex: 1;
-  max-width: 800px;
-  margin: 0 1rem;
+  order: 3;               /* baja a la segunda fila */
+  flex: 1 1 100%;
+  margin: 0;
 }
 
 .iconLupa {
@@ -48,7 +52,7 @@
   padding: 0.65rem 1rem 0.65rem 2.5rem;
   border: 1px solid var(--color-border);
   border-radius: 24px;
-  font-size: 0.95rem;
+  font-size: 1rem;        /* 16px evita el zoom automático de iOS al enfocar */
   outline: none;
   transition: border-color 0.15s;
 }
@@ -84,14 +88,14 @@
   background: var(--color-bg-light);
 }
 
-/* Acciones: Mi cuenta + Carrito  */
-
+/* Acciones: Mi cuenta + Carrito */
 .acciones {
+  order: 2;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.75rem;
   flex-shrink: 0;
-  margin-left: 4rem; 
+  margin-left: auto;      /* pegadas a la derecha de la primera fila */
 }
 
 /* MI CUENTA */
@@ -101,7 +105,7 @@
   gap: 0.4rem;
   color: var(--color-text);
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 500;
   font-family: Arial, Helvetica, sans-serif;
   transition: color 0.15s;
@@ -111,16 +115,16 @@
 }
 
 .iconUsuario {
-  width: 45px;
-  height: 45px;
+  width: 32px;
+  height: 32px;
 }
 
-/* CARRITO  */
+/* CARRITO */
 .carritoBoton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 1.2rem;
+  padding: 0.35rem 0.6rem;
   background-color: #a2c7ff5b;
   border-radius: 24px;
   border: 1.5px solid var(--color-primary);
@@ -129,24 +133,28 @@
 }
 
 .iconCarrito {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
 }
 
 .carritoTexto {
+  display: none;          /* en celular queda solo el ícono */
   color: #140547;
   font-size: 1rem;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 500;
   white-space: nowrap;
 }
-/* BAR LOWER — links de navegación general  */
 
+/* ============================================
+   BAR LOWER — links de navegación general
+   ============================================ */
 .barraReferencias {
   display: flex;
-  gap: 2rem;
-  padding: 0.6rem 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   background: var(--color-bg-light);
 }
 
@@ -169,15 +177,18 @@
   font-weight: 600;
 }
 
-/*  BAR CATEGORIES — franja de categorías */
-
+/* ============================================
+   BAR CATEGORIES — franja de categorías
+   ============================================ */
 .barraCategorias {
   display: flex;
   gap: 1.5rem;
-  padding: 0.6rem 1.5rem;
+  padding: 0.6rem 0.75rem;
   background: var(--color-primary);
   color: var(--color-secondary);
   font-size: 0.9rem;
+  overflow-x: auto;       /* si no entran, se desplaza solo esta franja */
+  white-space: nowrap;
 }
 
 .barraCategorias span {
@@ -198,4 +209,41 @@
 
 .listaSugerencias .sinResultados:hover {
   background: transparent;
+}
+
+/* ============================================
+   MD — tablet (≥ 768px)
+   ============================================ */
+@media (min-width: 768px) {
+  .barraSuperior { gap: 0.75rem; padding: 0.75rem 1rem; }
+  .logo { height: 80px; }
+
+  .buscadorWrapper {
+    order: 0;             /* vuelve a quedar entre el logo y las acciones */
+    flex: 1;
+    max-width: 800px;
+    margin: 0 1rem;
+  }
+  .buscador { font-size: 0.95rem; }
+
+  .acciones { order: 0; margin-left: 0; gap: 1.25rem; }
+  .usuarioLink { font-size: 1rem; }
+  .iconUsuario { width: 40px; height: 40px; }
+  .carritoBoton { padding: 0.45rem 1rem; }
+  .iconCarrito { width: 34px; height: 34px; }
+  .carritoTexto { display: inline; }
+
+  .barraReferencias { gap: 2rem; padding: 0.6rem 1.5rem; }
+  .barraCategorias { padding: 0.6rem 1.5rem; }
+}
+
+/* ============================================
+   LG — escritorio (≥ 1024px)
+   ============================================ */
+@media (min-width: 1024px) {
+  .logo { height: 120px; }
+  .acciones { gap: 1.5rem; margin-left: 4rem; }
+  .iconUsuario { width: 45px; height: 45px; }
+  .carritoBoton { padding: 0.55rem 1.2rem; }
+  .iconCarrito { width: 40px; height: 40px; }
 }
