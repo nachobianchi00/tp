@@ -1,6 +1,6 @@
 .titulo {
-  margin: 0 0 1.25rem;
-  font-size: 1.4rem;
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
   color: var(--color-primary);
 }
 
@@ -80,7 +80,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* botones */
+/* botones: celular, uno debajo del otro a todo el ancho */
 .botones {
   display: flex;
   flex-wrap: wrap;
@@ -90,6 +90,7 @@
 
 .boton {
   box-sizing: border-box;
+  flex: 1 1 100%;
   min-height: 44px;
   padding: 0.65rem 1.4rem;
   border: 1px solid var(--color-primary);
@@ -101,6 +102,7 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -124,4 +126,9 @@
 .boton:disabled {
   opacity: 0.65;
   cursor: wait;
+}
+
+@media (min-width: 768px) {
+  .titulo { margin-bottom: 1.25rem; font-size: 1.4rem; }
+  .boton { flex: 0 1 auto; }
 }
