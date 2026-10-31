@@ -12,6 +12,7 @@ export default function AdminCategories() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [parentId, setParentId] = useState<number | null>(null);
+  
 
   useEffect(() => {
     getCategories()
