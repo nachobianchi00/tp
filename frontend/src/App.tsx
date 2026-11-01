@@ -28,6 +28,7 @@ import OrderDetail from './page/admin/page/orders/orderDetail';
 import AdminCategories from './page/admin/page/categories/categories';
 import AdminPayMethods from './page/admin/page/payMethods/payMethods';
 import AdminProducts from './page/admin/page/products/products';
+import Admins from './page/admin/page/admins/admins';
 
 // Layout de la tienda: Header + contenido + Footer. El admin NO pasa por acá.
 function ClientLayout() {
@@ -83,6 +84,7 @@ function App() {
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="metodos-pago" element={<AdminPayMethods />} />
                 <Route path="productos" element={<AdminProducts />} />
+                <Route path="administradores" element={<Admins />} />
               </Route>
             </Route>
           </Route>

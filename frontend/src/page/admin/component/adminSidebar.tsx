@@ -89,6 +89,23 @@ export default function AdminSidebar() {
         Productos
       </NavLink>
       
+      <NavLink to="/admin/administradores" className={itemClass}>
+        <svg
+          className={styles.icono}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+        </svg>
+        Administradores
+      </NavLink>
+
         <button type="button" className={styles.item} onClick={handleLogout}>
           <svg className={styles.icono} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
