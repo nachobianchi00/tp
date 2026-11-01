@@ -1,5 +1,9 @@
 .layout {
   min-height: 100vh;
-  padding: 24px 16px;
+  padding: 1rem 0;
   background: #fff;
+}
+
+@media (min-width: 768px) {
+  .layout { padding: 24px 16px; }
 }
