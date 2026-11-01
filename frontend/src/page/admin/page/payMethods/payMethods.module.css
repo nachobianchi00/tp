@@ -1,6 +1,6 @@
 .title {
   margin: 0 0 1rem;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: var(--color-text);
 }
 
@@ -16,12 +16,13 @@
   overflow: hidden;
 }
 
+/* Celular y escritorio: info a la izquierda, botones a la derecha */
 .row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
   overflow-wrap: anywhere;
 }
@@ -32,9 +33,9 @@
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .iconButton {
@@ -81,7 +82,7 @@ form.compactForm {
   align-items: flex-end;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding: 1.25rem;
+  padding: 1rem;
   margin-bottom: 1.5rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -138,8 +139,8 @@ form.compactForm select {
   color: var(--color-text-light);
 }
 
-@media (min-width: 641px) {
-  .row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
+@media (min-width: 768px) {
+  .title { font-size: 1.5rem; }
+  .row { padding: 0.9rem 1rem; gap: 1rem; }
+  form.compactForm { padding: 1.25rem; }
 }

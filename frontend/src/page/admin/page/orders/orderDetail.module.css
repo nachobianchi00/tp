@@ -12,15 +12,16 @@
 
 .encabezado {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
 }
 
 .fecha {
@@ -41,7 +42,7 @@
   color: #8a6100;
 }
 
-.confirmado{
+.confirmado {
   background: #e0f0fa;
   color: var(--color-primary);
 }
@@ -59,7 +60,7 @@
 /* ---------- Tarjetas ---------- */
 .card {
   margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 0.9rem 1rem;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #fff;
@@ -72,8 +73,8 @@
 
 .datos {
   display: grid;
-  grid-template-columns: 7rem 1fr;
-  gap: 0.35rem 1rem;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
   margin: 0;
 }
 
@@ -95,10 +96,12 @@
 
 .producto {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.25rem 1rem;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
 }
 
 .totales {
@@ -118,7 +121,7 @@
   font-size: 1.05rem;
 }
 
-/* ---------- Acciones ---------- */
+/* ---------- Acciones: celular, botones a todo el ancho ---------- */
 .error {
   color: #9f2020;
 }
@@ -130,6 +133,8 @@
 }
 
 .boton {
+  flex: 1 1 100%;
+  min-height: 44px;
   padding: 0.55rem 1.2rem;
   border: 1px solid var(--color-primary);
   border-radius: 8px;
@@ -153,4 +158,14 @@
   background: #fff;
   border-color: #9f2020;
   color: #9f2020;
+}
+
+@media (min-width: 768px) {
+  .title { font-size: 1.5rem; }
+  .card { padding: 1rem 1.25rem; }
+  .datos {
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 0.35rem 1rem;
+  }
+  .boton { flex: 0 1 auto; min-height: 0; }
 }
