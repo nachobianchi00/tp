@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { SubmitEvent } from 'react';
-import { http, HttpError } from '../../../../service/http';
+import { HttpError } from '../../../../service/http';
+import { createAdmin, deleteAdmin, getAdmins, updateAdmin, type AdminUser } from '../../../../service/admin.service';
 import { useAuth } from '../../../../context/authContext/useAuth';
 import panel from '../../../myAccount/accountPanel.module.css';
 import styles from './admins.module.css';
-
-interface AdminUser {
-  id: number;
-  nombre: string;
-  apellido: string;
-  dni: number;
-  mail: string;
-}
 
 function errorMessage(error: unknown, fallback: string) {
   if (error instanceof HttpError) {
@@ -43,8 +36,8 @@ export default function Admins() {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    http<{ data: AdminUser[] }>('/admins')
-      .then((response) => setAdmins(response.data))
+    getAdmins()
+      .then(setAdmins)
       .catch((cause) => setError(errorMessage(cause, 'No se pudieron cargar los administradores.')))
       .finally(() => setLoading(false));
   }, []);
@@ -94,38 +87,28 @@ export default function Admins() {
       return;
     }
 
-    const body: {
-      nombre: string;
-      apellido: string;
-      dni: number;
-      mail: string;
-      password?: string;
-    } = {
-      nombre: name.trim(),
-      apellido: lastName.trim(),
+    const adminInput = {
+      name: name.trim(),
+      lastName: lastName.trim(),
       dni: dniNumber,
-      mail: email.trim().toLowerCase(),
+      email: email.trim().toLowerCase(),
     };
-
-    if (password.trim() !== '') body.password = password.trim();
+    const newPassword = password.trim();
 
     setSaving(true);
 
     try {
-      const path = editingId === null ? '/admins' : `/admins/${editingId}`;
+      const savedAdmin = editingId === null
+      ? await createAdmin(adminInput, newPassword)
+      : await updateAdmin(editingId, adminInput, newPassword || undefined);
 
-      const response = await http<{ data: AdminUser }>(path, {
-        method: editingId === null ? 'POST' : 'PUT',
-        body: JSON.stringify(body),
-      });
-
-      if (editingId === null) {
-        setAdmins((previous) => [...previous, response.data]);
-      } else {
-        setAdmins((previous) =>
-          previous.map((admin) => admin.id === editingId ? response.data : admin)
-        );
-      }
+    if (editingId === null) {
+      setAdmins((previous) => [...previous, savedAdmin]);
+    } else {
+      setAdmins((previous) =>
+        previous.map((admin) => admin.id === editingId ? savedAdmin : admin)
+      );
+    }
 
       resetForm();
       setNotice('Administrador guardado correctamente.');
@@ -145,7 +128,7 @@ export default function Admins() {
     setNotice('');
 
     try {
-      await http(`/admins/${admin.id}`, { method: 'DELETE' });
+      await deleteAdmin(admin.id);
 
       setAdmins((previous) => previous.filter((item) => item.id !== admin.id));
 

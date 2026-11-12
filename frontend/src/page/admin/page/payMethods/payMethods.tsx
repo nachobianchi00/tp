@@ -1,6 +1,6 @@
 import panel from '../../../myAccount/accountPanel.module.css';
 import { useEffect, useState } from 'react';
-import { http } from '../../../../service/http';
+import {createPayMethod, deletePayMethod, getPayMethods, updatePayMethod } from '../../../../service/payMethod.service';
 import type { PayMethod } from '../../../../type/payMethod';
 import type { SubmitEvent } from 'react';
 import styles from './payMethods.module.css';
@@ -16,10 +16,10 @@ export default function AdminPayMethods() {
 
 
   useEffect(() => {
-    http<{ data: PayMethod[] }>('/metodos-pago')
-      .then((response) => setPayMethods(response.data))
-      .catch(() => setError('No se pudieron cargar los métodos de pago.'))
-      .finally(() => setLoading(false));
+  getPayMethods()
+    .then(setPayMethods)
+    .catch(() => setError('No se pudieron cargar los métodos de pago.'))
+    .finally(() => setLoading(false));
   }, []);
 
   function handleEdit(method: PayMethod) {
@@ -44,24 +44,16 @@ export default function AdminPayMethods() {
     setError('');
 
     try {
-      const path = editingId === null
-        ? '/metodos-pago'
-        : `/metodos-pago/${editingId}`;
-
-      const response = await http<{ data: PayMethod }>(path, {
-        method: editingId === null ? 'POST' : 'PUT',
-        body: JSON.stringify({
-          descripcion: description.trim(),
-          estado: active,
-        }),
-      });
+      const savedMethod = editingId === null
+        ? await createPayMethod(description.trim(), active)
+        : await updatePayMethod(editingId, description.trim(), active);
 
       if (editingId === null) {
-        setPayMethods((previous) => [...previous, response.data]);
+        setPayMethods((previous) => [...previous, savedMethod]);
       } else {
         setPayMethods((previous) =>
           previous.map((method) =>
-            method.id === editingId ? response.data : method
+            method.id === editingId ? savedMethod : method
           )
         );
       }
@@ -82,8 +74,8 @@ export default function AdminPayMethods() {
     setError('');
 
     try {
-      await http(`/metodos-pago/${method.id}`, { method: 'DELETE' });
-
+      await deletePayMethod(method.id);
+      
       setPayMethods((previous) =>
         previous.filter((item) => item.id !== method.id)
       );

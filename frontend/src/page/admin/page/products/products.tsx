@@ -1,6 +1,6 @@
 import panel from '../../../myAccount/accountPanel.module.css';
 import { useEffect, useState } from 'react';
-import { http } from '../../../../service/http';
+import { createProduct, deleteProduct, getProducts, updateProduct } from '../../../../service/product.service';
 import type { ProductType } from '../../../../type/productType';
 import { getCategories } from '../../../../service/category.service';
 import type { CategoryType } from '../../../../type/categoryType';
@@ -22,17 +22,14 @@ export default function AdminProducts() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
- useEffect(() => {
-  Promise.all([
-    http<{ data: ProductType[] }>('/productos'),
-    getCategories(),
-  ])
-    .then(([productResponse, categoryList]) => {
-      setProducts(productResponse.data);
-      setCategories(categoryList);
-    })
-    .catch(() => setError('No se pudieron cargar los productos y las categorías.'))
-    .finally(() => setLoading(false));
+  useEffect(() => {
+    Promise.all([getProducts(), getCategories()])
+      .then(([productList, categoryList]) => {
+        setProducts(productList);
+        setCategories(categoryList);
+      })
+      .catch(() => setError('No se pudieron cargar los productos y las categorías.'))
+      .finally(() => setLoading(false));
   }, []);
 
   function handleCategoryChange(position: number, value: string) {
@@ -92,7 +89,7 @@ export default function AdminProducts() {
         setError('');
 
         try {
-          await http(`/productos/${product.id}`, { method: 'DELETE' });
+          await deleteProduct(product.id);
 
           setProducts((previous) =>
             previous.filter((item) => item.id !== product.id)
@@ -146,24 +143,21 @@ export default function AdminProducts() {
         setSaving(true);
 
         try {
-          const path = editingId === null
-            ? '/productos'
-            : `/productos/${editingId}`;
+          const productInput = {
+            name: name.trim(),
+            description: description.trim(),
+            price: Number(price),
+            stock: Number(stock),
+            active,
+            categoryIds: selectedCategoryIds,
+          };
 
-          const response = await http<{ data: ProductType }>(path, {
-            method: editingId === null ? 'POST' : 'PUT',
-            body: JSON.stringify({
-              nombre: name.trim(),
-              descripcion: description.trim(),
-              precio: Number(price),
-              cantidad: Number(stock),
-              estado: active,
-              categorias: selectedCategoryIds,
-            }),
-          });
+          const savedProduct = editingId === null
+            ? await createProduct(productInput)
+            : await updateProduct(editingId, productInput);
 
           const newProduct = {
-            ...response.data,
+            ...savedProduct,
             categorias: categories.filter((category) =>
               selectedCategoryIds.includes(category.id)
             ),
