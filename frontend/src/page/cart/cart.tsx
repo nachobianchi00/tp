@@ -24,7 +24,7 @@ export default function Cart() {
         <div className={styles.listaProductos}>
           {items.map((item) => (
             <div key={item.product.id} className={styles.itemCard}>
-              <img src={productImage(item.product.nombre)} alt={item.product.nombre} className={styles.itemImagen} />
+              <img src={productImage(item.product.nombre, item.product.imagenUrl)} alt={item.product.nombre} className={styles.itemImagen} />
 
               <div className={styles.itemInfo}>
                 <p className={styles.itemNombre}>{item.product.nombre}</p>

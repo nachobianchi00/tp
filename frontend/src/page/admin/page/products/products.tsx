@@ -6,7 +6,7 @@ import { getCategories } from '../../../../service/category.service';
 import type { CategoryType } from '../../../../type/categoryType';
 import type { SubmitEvent } from 'react';
 import styles from './products.module.css';
-
+import { productImage } from '../../../../util/productImage';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -21,6 +21,18 @@ export default function AdminProducts() {
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [photo, setPhoto] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [photoError, setPhotoError] = useState('');
+
+  /* 
+    'file' guarda el archivo elegido, 
+    'previewUrl' es una dirección temporal que el navegador usa para mostrarlo,
+    el efecto libera esa dirección cuando el componente se desmonta o cambia la foto.
+  */
+  useEffect(() => {
+    if (!photo) return;
+    return () => URL.revokeObjectURL(photo.previewUrl);
+  }, [photo]);
 
   useEffect(() => {
     Promise.all([getProducts(), getCategories()])
@@ -48,7 +60,26 @@ export default function AdminProducts() {
     });
   }
 
+      function selectPhoto(file?: File) {
+        if (!file || saving) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          setPhotoError('Elegí una imagen JPG, PNG o WebP.');
+          return;
+        }
+
+        setPhotoError('');
+        setPhoto({ file, previewUrl: URL.createObjectURL(file) });
+      }
+
+      function clearPhoto() {
+        setPhoto(null);
+        setPhotoError('');
+      }
+
       function handleEdit(product: ProductType) {
+        setPhoto(null);
         setEditingId(product.id);
         setName(product.nombre);
         setDescription(product.descripcion);
@@ -71,6 +102,7 @@ export default function AdminProducts() {
       }
 
       function resetForm() {
+        setPhoto(null);
         setEditingId(null);
         setError('');
         setName('');
@@ -299,7 +331,75 @@ export default function AdminProducts() {
             onChange={(event) => setDescription(event.target.value)}
           />
         </div>
+        
+        <div>
+          <label htmlFor="product-photo">Imagen</label>
 
+          <div
+            className={styles.photoZone}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              selectPhoto(event.dataTransfer.files[0]);
+            }}
+          >
+            <input
+              id="product-photo"
+              className={styles.photoInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label={photo ? 'Cambiar foto' : 'Elegir foto'}
+              disabled={saving}
+              onChange={(event) => {
+                selectPhoto(event.currentTarget.files?.[0]);
+                event.currentTarget.value = '';
+              }}
+            />
+
+            {photo ? (
+              <img
+                className={styles.thumbnail}
+                src={photo.previewUrl}
+                alt="Vista previa"
+                width={52}
+                height={52}
+              />
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M12 16V4m-5 5 5-5 5 5M4 16v4h16v-4" />
+              </svg>
+            )}
+
+            <span className={styles.photoText}>
+              {photo ? photo.file.name : 'Elegí o arrastrá una imagen'}
+            </span>
+
+            {photo && (
+              <button
+                type="button"
+                className={`${styles.iconButton} ${styles.deleteButton} ${styles.removePhoto}`}
+                aria-label="Quitar foto"
+                title="Quitar foto"
+                disabled={saving}
+                onClick={clearPhoto}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {photoError && <p className={panel.error} role="alert">{photoError}</p>}
+        </div>
 
         {!loading && !error && categories.length === 0 && (
           <p className={panel.texto}>
@@ -343,7 +443,17 @@ export default function AdminProducts() {
       <ul className={styles.list}>
         {products.map((product) => (
           <li key={product.id} className={styles.row}>
-            <div className={styles.productInfo}>
+            <div className={styles.productSummary}>
+              <img
+                className={styles.thumbnail}
+                src={productImage(product.nombre, product.imagenUrl)}
+                alt=""
+                width={52}
+                height={52}
+              />
+
+              <div className={styles.productInfo}>
+
               <strong>{product.nombre}</strong>
 
               <span>
@@ -356,6 +466,8 @@ export default function AdminProducts() {
                   .map((category) => category.nombre)
                   .join(', ') || 'Sin categoría'}
               </span>
+            
+              </div>
             </div>
 
             <div className={styles.actions}>

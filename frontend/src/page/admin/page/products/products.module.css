@@ -86,6 +86,19 @@
   border-bottom: 0;
 }
 
+.productSummary {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.thumbnail {
+  display: block;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .productInfo {
   display: grid;
   gap: 0.25rem;
@@ -153,6 +166,53 @@
 .formActions button {
   flex: 1 1 100%;
   width: auto;
+}
+
+.photoZone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 80px;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--color-primary);
+  border-radius: 8px;
+  color: var(--color-primary);
+  background: #fff;
+}
+
+.photoZone:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.photoZone .photoInput {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photoText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removePhoto {
+  position: relative;
+  z-index: 1;   /* deja la cruz por encima del selector transparente */
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 641px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 }
 
 @media (min-width: 768px) {

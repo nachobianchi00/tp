@@ -39,7 +39,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <p className={styles.categoria}>{product.categorias.map((c) => c.nombre).join(", ")}</p>
 
       <div className={styles.contenido}>
-        <img src={productImage(product.nombre)} alt={product.nombre} className={styles.imagen} />
+        <img src={productImage(product.nombre, product.imagenUrl)} alt={product.nombre} className={styles.imagen} />
 
         <div className={styles.info}>
           <h2 className={styles.nombre}>{product.nombre}</h2>
