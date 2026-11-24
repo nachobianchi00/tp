@@ -35,8 +35,12 @@ export default function AdminCategories() {
     setError('');
   }
   
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) { 
+    // event.preventDefault() evita que se recargue la página al enviar el formulario
+    // Se valida los datos antes de llamar a la API para crear o actualizar la categoría.  
+    
+    event.preventDefault();   
+
     if (loading || saving || name.trim() === '') return;
 
     setSaving(true);

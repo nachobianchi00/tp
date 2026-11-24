@@ -43,6 +43,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
         <div className={styles.info}>
           <h2 className={styles.nombre}>{product.nombre}</h2>
+          {product.descripcion?.trim() && (
+            <p className={styles.description}>{product.descripcion}</p>
+          )}
           <p className={styles.precio}>${product.precio}</p>
           <p className={styles.stock}>{sinStock ? 'Sin stock' : `Stock disponible: ${product.cantidad}`}</p>
 

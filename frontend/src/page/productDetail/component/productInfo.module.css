@@ -42,6 +42,10 @@
   margin: 0;
 }
 
+.description {
+  margin: 0;
+}
+
 .precio {
   font-size: 1.6rem;
   font-weight: 700;
